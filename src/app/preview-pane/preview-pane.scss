@@ -20,7 +20,7 @@
   flex: 1;
   overflow: hidden;
   position: relative;
-  background: #1a1a2e; // Dark stage behind the slide
+  background: var(--surface-container);
 }
 
 .slide-frame {

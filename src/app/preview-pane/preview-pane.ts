@@ -6,9 +6,9 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, map, switchMap } from 'rxjs/operators';
-import { of, timer } from 'rxjs';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
+import { fromEvent, of, timer } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AppStore } from '../store/app-store';
@@ -41,6 +41,15 @@ export class PreviewPaneComponent {
   );
 
   constructor() {
+    // Sync slide index when the iframe navigates via keyboard (e.g. in fullscreen)
+    fromEvent<MessageEvent>(window, 'message')
+      .pipe(
+        filter(e => e.source === this.iframeRef()?.nativeElement.contentWindow),
+        filter(e => typeof e.data?.slideIndex === 'number'),
+        takeUntilDestroyed(),
+      )
+      .subscribe(e => this.store.goToSlide(e.data.slideIndex));
+
     // Update iframe srcdoc and store slide count whenever rendered output changes
     effect(() => {
       const result = this.rendered();
