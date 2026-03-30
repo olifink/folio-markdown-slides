@@ -1,0 +1,18 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.editor-host {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+
+  // Let CodeMirror fill the host element
+  .cm-editor {
+    height: 100%;
+  }
+}

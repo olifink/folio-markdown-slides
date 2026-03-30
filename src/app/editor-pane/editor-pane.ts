@@ -1,60 +1,69 @@
-import { ChangeDetectionStrategy, Component, ElementRef, effect, inject, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  afterNextRender,
+  effect,
+  inject,
+  viewChild,
+} from '@angular/core';
+import { EditorView } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
 import { AppStore } from '../store/app-store';
+import { createMarpExtensions } from './marp-editor';
+import { CheatBarComponent } from './cheat-bar/cheat-bar';
 
 @Component({
   selector: 'app-editor-pane',
+  imports: [CheatBarComponent],
   template: `
-    <textarea
-      #editor
-      class="editor-textarea"
-      (input)="store.setMarkdown(editor.value)"
-      aria-label="Markdown editor"
-      spellcheck="false"
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-    ></textarea>
+    <div #editorHost class="editor-host"></div>
+    <app-cheat-bar (insert)="onCheatInsert($event)" />
   `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .editor-textarea {
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      padding: 1.25rem;
-      border: none;
-      outline: none;
-      resize: none;
-      font-family: var(--font-editor);
-      font-size: 1rem;
-      line-height: 1.6;
-      background: var(--surface);
-      color: var(--on-surface);
-      tab-size: 2;
-    }
-  `,
+  styleUrl: './editor-pane.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'editor-pane' },
 })
 export class EditorPaneComponent {
-  protected readonly store = inject(AppStore);
-  private readonly editorRef = viewChild.required<ElementRef<HTMLTextAreaElement>>('editor');
+  private readonly store = inject(AppStore);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly editorHost = viewChild.required<ElementRef<HTMLDivElement>>('editorHost');
+
+  private editorView: EditorView | null = null;
 
   constructor() {
-    // Sync textarea value from store when the change originates externally
-    // (e.g. loading a file in M4). Skip update when the textarea is focused
-    // to avoid resetting cursor position while the user is typing.
+    afterNextRender(() => {
+      this.editorView = new EditorView({
+        state: EditorState.create({
+          doc: this.store.currentMarkdown(),
+          extensions: createMarpExtensions(md => this.store.setMarkdown(md)),
+        }),
+        parent: this.editorHost().nativeElement,
+      });
+    });
+
+    // Sync editor content when the store changes externally (e.g. file load in M4)
     effect(() => {
       const md = this.store.currentMarkdown();
-      const el = this.editorRef().nativeElement;
-      if (document.activeElement !== el) {
-        el.value = md;
-      }
+      const view = this.editorView;
+      if (!view || view.state.doc.toString() === md) return;
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: md },
+      });
     });
+
+    this.destroyRef.onDestroy(() => this.editorView?.destroy());
+  }
+
+  protected onCheatInsert(snippet: string): void {
+    const view = this.editorView;
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    view.dispatch({
+      changes: { from, to, insert: snippet },
+      selection: { anchor: from + snippet.length },
+    });
+    view.focus();
   }
 }

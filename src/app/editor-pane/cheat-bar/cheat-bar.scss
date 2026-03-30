@@ -1,0 +1,60 @@
+:host {
+  display: block;
+  flex-shrink: 0;
+}
+
+.cheat-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  overflow-x: auto;
+  background: var(--surface-container);
+  border-top: 1px solid var(--outline);
+  scrollbar-width: none; // hide scrollbar on Firefox
+  &::-webkit-scrollbar { display: none; }
+}
+
+// ── Cheat buttons ─────────────────────────────────────────────────────────────
+
+.cheat-button {
+  height: 32px;
+  min-width: unset;
+  padding: 0 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 8px !important;
+  border: 1px solid var(--outline) !important;
+  background: var(--surface) !important;
+  color: var(--on-surface) !important;
+  flex-shrink: 0;
+  // 100ms Plasma fill flash on press
+  transition: background 100ms ease-out, color 100ms ease-out !important;
+
+  &:active {
+    background: var(--color-plasma) !important;
+    color: #fff !important;
+    transition: none !important;
+  }
+}
+
+// ── Menu items ────────────────────────────────────────────────────────────────
+
+.cheat-menu-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  line-height: 1.2;
+}
+
+.cheat-menu-item__label {
+  font-size: 0.875rem;
+  color: var(--on-surface);
+}
+
+.cheat-menu-item__hint {
+  font-family: var(--font-editor);
+  font-size: 0.75rem;
+  color: var(--color-plasma);
+  opacity: 0.8;
+}

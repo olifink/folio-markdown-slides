@@ -6,7 +6,8 @@
       "Bash(npm run:*)",
       "Bash(node -e \"const sass = require\\(''''sass''''\\); const r = sass.renderSync\\({data: \"\"@use ''''@angular/material'''' as mat; $x: mat.$yellow-palette;\"\"}\\); console.log\\(''''ok''''\\)\")",
       "Bash(node -e \":*)",
-      "Bash(node -e \"console.log\\(require\\(''@angular/core/package.json''\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\(''@angular/core/package.json''\\).version\\)\")",
+      "Bash(node -e \"const {tags} = require\\(''@lezer/highlight''\\); console.log\\(Object.keys\\(tags\\).filter\\(k => k.includes\\(''code''\\) || k.includes\\(''Code''\\) || k.includes\\(''mono''\\) || k.includes\\(''Mono''\\)\\).join\\('', ''\\)\\)\")"
     ]
   }
 }
