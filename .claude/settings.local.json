@@ -4,7 +4,9 @@
       "Bash(npm list:*)",
       "Bash(npm install:*)",
       "Bash(npm run:*)",
-      "Bash(node -e \"const sass = require\\(''''sass''''\\); const r = sass.renderSync\\({data: \"\"@use ''''@angular/material'''' as mat; $x: mat.$yellow-palette;\"\"}\\); console.log\\(''''ok''''\\)\")"
+      "Bash(node -e \"const sass = require\\(''''sass''''\\); const r = sass.renderSync\\({data: \"\"@use ''''@angular/material'''' as mat; $x: mat.$yellow-palette;\"\"}\\); console.log\\(''''ok''''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"console.log\\(require\\(''@angular/core/package.json''\\).version\\)\")"
     ]
   }
 }

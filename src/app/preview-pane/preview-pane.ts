@@ -7,7 +7,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { debounceTime, map } from 'rxjs/operators';
+import { debounceTime, map, switchMap } from 'rxjs/operators';
+import { of, timer } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AppStore } from '../store/app-store';
@@ -23,38 +24,43 @@ import { MarpService } from '../services/marp.service';
 export class PreviewPaneComponent {
   protected readonly store = inject(AppStore);
   private readonly marpService = inject(MarpService);
-  private readonly iframeRef = viewChild.required<ElementRef<HTMLIFrameElement>>('previewFrame');
+  private readonly iframeRef = viewChild<ElementRef<HTMLIFrameElement>>('previewFrame');
 
+  /**
+   * First emission is immediate (no debounce) so the preview populates on load.
+   * Subsequent emissions debounce 300ms to avoid re-rendering on every keystroke.
+   */
   private readonly rendered = toSignal(
     toObservable(this.store.currentMarkdown).pipe(
-      debounceTime(300),
+      switchMap((md, index) =>
+        index === 0 ? of(md) : timer(300).pipe(map(() => md)),
+      ),
       map(md => this.marpService.render(md)),
     ),
+    { initialValue: this.marpService.render(this.store.currentMarkdown()) },
   );
 
   constructor() {
-    // Re-render iframe when Marp output changes
+    // Update iframe srcdoc and store slide count whenever rendered output changes
     effect(() => {
       const result = this.rendered();
-      if (!result) return;
+      const iframe = this.iframeRef();
+      if (!iframe) return;
       this.store.setSlideCount(result.slideCount);
-      this.iframeRef().nativeElement.srcdoc = this.marpService.buildSrcdoc(
-        result.html,
-        result.css,
-      );
+      iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css);
     });
 
-    // Navigate to the current slide (also fires after each srcdoc reload via onFrameLoad)
+    // Scroll to current slide (also fires via onFrameLoad after srcdoc reloads)
     effect(() => {
       const idx = this.store.currentSlideIndex();
-      this.iframeRef().nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
+      this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
     });
   }
 
-  /** Re-send slide position after the iframe finishes loading new srcdoc content. */
+  /** Re-sends the active slide index after the iframe finishes loading new srcdoc content. */
   protected onFrameLoad(): void {
     const idx = this.store.currentSlideIndex();
-    this.iframeRef().nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
+    this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
   }
 
   protected prevSlide(): void {
@@ -66,6 +72,6 @@ export class PreviewPaneComponent {
   }
 
   protected present(): void {
-    this.iframeRef().nativeElement.requestFullscreen();
+    this.iframeRef()?.nativeElement.requestFullscreen();
   }
 }

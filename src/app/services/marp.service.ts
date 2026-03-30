@@ -7,7 +7,8 @@ export class MarpService {
 
   render(markdown: string): { html: string; css: string; slideCount: number } {
     const { html, css } = this.marp.render(markdown);
-    const slideCount = (html.match(/<section/g) ?? []).length || 1;
+    // Marp renders one <svg data-marpit-svg> per slide
+    const slideCount = (html.match(/data-marpit-svg/g) ?? []).length || 1;
     return { html, css, slideCount };
   }
 
@@ -28,9 +29,9 @@ export class MarpService {
 ${html}
 <script>
 (function () {
-  var sections = document.querySelectorAll('section');
   function show(idx) {
-    if (sections[idx]) sections[idx].scrollIntoView({ behavior: 'instant' });
+    var slides = document.querySelectorAll('svg[data-marpit-svg]');
+    if (slides[idx]) slides[idx].scrollIntoView({ behavior: 'instant' });
   }
   window.addEventListener('message', function (e) {
     if (e.data && typeof e.data.slideIndex === 'number') show(e.data.slideIndex);
