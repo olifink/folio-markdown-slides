@@ -42,7 +42,7 @@ npm start        # dev server → http://localhost:4200
 | Milestone | Status |
 |---|---|
 | **M1** Shell layout — split-pane (wide) / tabbed (narrow), toolbar | ✅ Done |
-| **M2** Marp rendering — live Markdown → iframe preview | Planned |
+| **M2** Marp rendering — live Markdown → iframe preview | ✅ Done |
 | **M3** CodeMirror editor — syntax theme, `---` bar decoration, cheat bar | Planned |
 | **M4** Storage — lightning-fs persistence, file list, create/rename/delete | Planned |
 | **M5** Presentation mode — fullscreen, slide nav, theme switcher | Planned |

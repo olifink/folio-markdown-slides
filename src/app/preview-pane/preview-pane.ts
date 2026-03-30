@@ -1,60 +1,71 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  inject,
+  viewChild,
+} from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, map } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { AppStore } from '../store/app-store';
+import { MarpService } from '../services/marp.service';
 
 @Component({
   selector: 'app-preview-pane',
   imports: [MatButtonModule, MatIconModule],
-  template: `
-    <div class="preview-pane">
-      <p class="placeholder">Slide preview</p>
-      <button
-        mat-fab
-        class="present-fab"
-        aria-label="Present slides"
-        title="Present"
-      >
-        <mat-icon>play_arrow</mat-icon>
-      </button>
-    </div>
-  `,
-  styles: `
-    :host {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: var(--surface-container);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .preview-pane {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      height: 100%;
-    }
-
-    .placeholder {
-      font-family: var(--font-ui);
-      font-size: 0.875rem;
-      color: var(--on-surface);
-      margin: 0;
-      opacity: 0.4;
-    }
-
-    .present-fab {
-      position: absolute;
-      bottom: 16px;
-      right: 16px;
-      // Volt fill with dark icon per BRIEF
-      --mdc-fab-container-color: var(--color-volt);
-      --mdc-fab-icon-color: #18181F;
-      --mat-fab-foreground-color: #18181F;
-    }
-  `,
+  templateUrl: './preview-pane.html',
+  styleUrl: './preview-pane.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PreviewPaneComponent {}
+export class PreviewPaneComponent {
+  protected readonly store = inject(AppStore);
+  private readonly marpService = inject(MarpService);
+  private readonly iframeRef = viewChild.required<ElementRef<HTMLIFrameElement>>('previewFrame');
+
+  private readonly rendered = toSignal(
+    toObservable(this.store.currentMarkdown).pipe(
+      debounceTime(300),
+      map(md => this.marpService.render(md)),
+    ),
+  );
+
+  constructor() {
+    // Re-render iframe when Marp output changes
+    effect(() => {
+      const result = this.rendered();
+      if (!result) return;
+      this.store.setSlideCount(result.slideCount);
+      this.iframeRef().nativeElement.srcdoc = this.marpService.buildSrcdoc(
+        result.html,
+        result.css,
+      );
+    });
+
+    // Navigate to the current slide (also fires after each srcdoc reload via onFrameLoad)
+    effect(() => {
+      const idx = this.store.currentSlideIndex();
+      this.iframeRef().nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
+    });
+  }
+
+  /** Re-send slide position after the iframe finishes loading new srcdoc content. */
+  protected onFrameLoad(): void {
+    const idx = this.store.currentSlideIndex();
+    this.iframeRef().nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
+  }
+
+  protected prevSlide(): void {
+    this.store.goToSlide(this.store.currentSlideIndex() - 1);
+  }
+
+  protected nextSlide(): void {
+    this.store.goToSlide(this.store.currentSlideIndex() + 1);
+  }
+
+  protected present(): void {
+    this.iframeRef().nativeElement.requestFullscreen();
+  }
+}

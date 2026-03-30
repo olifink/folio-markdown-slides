@@ -1,0 +1,43 @@
+<div class="preview-pane">
+  <div class="slide-container">
+    <iframe
+      #previewFrame
+      class="slide-frame"
+      title="Slide preview"
+      (load)="onFrameLoad()"
+    ></iframe>
+  </div>
+
+  <nav class="slide-nav" aria-label="Slide navigation">
+    <button
+      mat-icon-button
+      aria-label="Previous slide"
+      [disabled]="store.currentSlideIndex() === 0"
+      (click)="prevSlide()"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <span class="slide-counter" aria-live="polite" aria-atomic="true">
+      {{ store.currentSlideIndex() + 1 }}&thinsp;/&thinsp;{{ store.slideCount() }}
+    </span>
+
+    <button
+      mat-icon-button
+      aria-label="Next slide"
+      [disabled]="store.currentSlideIndex() === store.slideCount() - 1"
+      (click)="nextSlide()"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </nav>
+
+  <button
+    mat-fab
+    class="present-fab"
+    aria-label="Present slides"
+    (click)="present()"
+  >
+    <mat-icon>play_arrow</mat-icon>
+  </button>
+</div>

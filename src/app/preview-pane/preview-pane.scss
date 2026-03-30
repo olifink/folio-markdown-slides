@@ -1,0 +1,64 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface-container);
+  overflow: hidden;
+  position: relative;
+}
+
+// ── Slide viewport ────────────────────────────────────────────────────────────
+
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.slide-container {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: #1a1a2e; // Dark stage behind the slide
+}
+
+.slide-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+// ── Slide navigation bar ──────────────────────────────────────────────────────
+
+.slide-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+  flex-shrink: 0;
+  background: var(--surface-container);
+  border-top: 1px solid var(--outline);
+}
+
+.slide-counter {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--on-surface);
+  min-width: 4rem;
+  text-align: center;
+  user-select: none;
+}
+
+// ── Present FAB ───────────────────────────────────────────────────────────────
+
+.present-fab {
+  position: absolute;
+  bottom: 3.5rem; // sits just above the nav bar
+  right: 1rem;
+  --mdc-fab-container-color: var(--color-volt);
+  --mdc-fab-icon-color: #18181F;
+  --mat-fab-foreground-color: #18181F;
+}
