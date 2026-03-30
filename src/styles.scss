@@ -104,6 +104,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+// ── CodeMirror scrollbar ─────────────────────────────────────────────────────
+// Uses existing CSS custom properties so it automatically follows the theme.
+
+.cm-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline) transparent;
+}
+
+.cm-scroller::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--outline);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--on-surface);
+  background-clip: content-box;
+  opacity: 0.5;
+}
+
 // Angular Material tab body height fix — allows tab content to fill height
 .mat-mdc-tab-body-wrapper {
   flex: 1 !important;
