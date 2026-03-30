@@ -19,22 +19,22 @@ const marpHighlightStyle = HighlightStyle.define([
   {
     tag: [tags.heading1, tags.heading2, tags.heading3,
           tags.heading4, tags.heading5, tags.heading6],
-    color: '#18181F',
+    color: 'var(--cm-color-heading)',
     fontWeight: 'bold',
   },
   // Bold and italic markers + their content → Neon Coral
-  { tag: tags.strong,   color: '#FF4D6D', fontWeight: 'bold' },
-  { tag: tags.emphasis, color: '#FF4D6D', fontStyle: 'italic' },
+  { tag: tags.strong,   color: 'var(--cm-color-emphasis)', fontWeight: 'bold' },
+  { tag: tags.emphasis, color: 'var(--cm-color-emphasis)', fontStyle: 'italic' },
   // Inline code → teal
-  { tag: tags.monospace, color: '#00BFA5' },
+  { tag: tags.monospace, color: 'var(--cm-color-code)' },
   // HTML comments (speaker notes / _class directives) → muted italic
   { tag: [tags.comment, tags.blockComment, tags.lineComment],
-    color: '#888899', fontStyle: 'italic' },
+    color: 'var(--cm-color-comment)', fontStyle: 'italic' },
   // YAML front-matter keys → Plasma
   { tag: [tags.meta, tags.keyword, tags.propertyName],
-    color: '#7C4DFF' },
+    color: 'var(--cm-color-meta)' },
   // Links and URLs
-  { tag: tags.url, color: '#00BFA5' },
+  { tag: tags.url, color: 'var(--cm-color-code)' },
 ]);
 
 // ── Slide separator line decoration ─────────────────────────────────────────

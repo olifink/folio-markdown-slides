@@ -61,6 +61,13 @@ html[data-color-scheme="dark"] {
   // Editor — slide separator bar (light mode defaults)
   --cm-separator-bg:    rgba(124, 77, 255, 0.1);
   --cm-separator-color: #7C4DFF;
+
+  // Editor — syntax highlight colors (light mode defaults)
+  --cm-color-heading:   #18181F;
+  --cm-color-emphasis:  #FF4D6D;
+  --cm-color-code:      #00BFA5;
+  --cm-color-comment:   #888899;
+  --cm-color-meta:      #7C4DFF;
 }
 
 // System preference: dark
@@ -72,6 +79,11 @@ html[data-color-scheme="dark"] {
     --outline:           #2E2E3E;
     --cm-separator-bg:    #1C1C24;
     --cm-separator-color: #C8FF00;
+    --cm-color-heading:   #E8E8F2;
+    --cm-color-emphasis:  #FF6B85;
+    --cm-color-code:      #1DE9B6;
+    --cm-color-comment:   #6666AA;
+    --cm-color-meta:      #9E72FF;
   }
 }
 
@@ -83,6 +95,11 @@ html[data-color-scheme="dark"] {
   --outline:           #2E2E3E;
   --cm-separator-bg:    #1C1C24;
   --cm-separator-color: #C8FF00;
+  --cm-color-heading:   #E8E8F2;
+  --cm-color-emphasis:  #FF6B85;
+  --cm-color-code:      #1DE9B6;
+  --cm-color-comment:   #6666AA;
+  --cm-color-meta:      #9E72FF;
 }
 
 // Forced light — also resets back to light even when system is dark
