@@ -76,9 +76,9 @@ export class MarpService {
   var current = 0;
 
   if (window.mermaid) {
-    mermaid.initialize({ 
-      startOnLoad: false, 
-      theme: 'neutral',
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
       securityLevel: 'loose',
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
       fontSize: 16,
@@ -140,15 +140,6 @@ export class MarpService {
   .mermaid-container {
     display: flex;
     justify-content: center;
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  }
-  .mermaid { 
-    font-family: sans-serif !important;
-    font-size: 16px !important;
-    color: #333 !important;
   }
   .mermaid svg {
     max-width: 100%;
