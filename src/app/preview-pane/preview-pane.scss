@@ -38,6 +38,7 @@
   justify-content: center;
   gap: 0.25rem;
   padding: 0.25rem 0;
+  padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
   flex-shrink: 0;
   background: var(--surface-container);
   border-top: 1px solid var(--outline);
