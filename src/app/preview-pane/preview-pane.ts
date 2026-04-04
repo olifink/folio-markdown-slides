@@ -2,13 +2,14 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  computed,
   effect,
   inject,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, filter, map, switchMap } from 'rxjs/operators';
-import { fromEvent, of, timer } from 'rxjs';
+import { fromEvent, of, timer, combineLatest, merge } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AppStore } from '../store/app-store';
@@ -49,6 +50,17 @@ export class PreviewPaneComponent {
         takeUntilDestroyed(),
       )
       .subscribe(e => this.store.goToSlide(e.data.slideIndex));
+
+    // Focus iframe when entering fullscreen so keyboard navigation works instantly
+    merge(
+      fromEvent(document, 'fullscreenchange'),
+      fromEvent(document, 'webkitfullscreenchange')
+    ).pipe(takeUntilDestroyed()).subscribe(() => {
+      const iframe = this.iframeRef()?.nativeElement;
+      if (document.fullscreenElement === iframe || (document as any).webkitFullscreenElement === iframe) {
+        iframe?.focus();
+      }
+    });
 
     // Update iframe srcdoc and store slide count whenever rendered output changes
     effect(() => {
