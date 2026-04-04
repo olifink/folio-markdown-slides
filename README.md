@@ -20,7 +20,7 @@ npm start        # dev server → http://localhost:4200
 | `npm start` | Dev server at `http://localhost:4200` (HMR enabled) |
 | `npm run build` | Production build → `dist/` |
 | `npm run build -- --configuration github` | Build for GitHub Pages (sub-path base href) |
-| `npm run watch` | Build in watch mode (development config) |
+| `node scripts/download-themes.mjs` | Refresh MarpX theme collection from GitHub |
 | `npm test` | Run unit tests with Vitest |
 | `npx prettier --write .` | Format all files |
 
@@ -32,11 +32,19 @@ npm start        # dev server → http://localhost:4200
 - **Inline Renaming** — click the filename in the app bar to rename the current deck; auto-commits on Enter/blur, cancels on Escape
 - **Persistence** — all slides saved locally via `lightning-fs` (IndexedDB POSIX fs); app preferences (last open file, theme, etc.) stored in a dedicated IndexedDB store
 - **PWA Ready** — fully functional offline via Angular Service Worker; pre-caches app shell, assets, and Google Fonts
-- **One slide at a time** — prev / next nav bar below the preview; keyboard navigation (`←` `→` `Space` `Backspace`) works in fullscreen
-- **Present button** — Volt FAB bottom-right of the preview; triggers `requestFullscreen()` on the iframe
-- **CodeMirror 6 editor** — JetBrains Mono, line-wrapping, undo/redo, full keyboard support
-- **Marp syntax theme** — headings bold, bold/italic markers in Neon Coral, inline code in teal, comments muted, front-matter keys in Plasma; `---` slide separators render as a full-width Volt-on-dark bar
+- **Export Options** — download as `.md`, self-contained `.html`, or Print to PDF (optimized landscape layout)
+- **Presentation Mode** — full-screen support with keyboard and **touch swipe** navigation
+- **Slide Sync** — preview automatically scrolls to the slide the cursor is currently in (aware of Marp front-matter)
+- **MarpX Themes** — built-in support for 16 professional themes (cantor, einstein, socrates, etc.)
 - **Cheat bar** — six snippet categories (Insert / Slide / Theme / Image / Text / Note), each opens a Material menu; items insert at the cursor and show a monospace hint for learning the syntax
+
+## Theme management
+
+Folio bundles the [MarpX](https://github.com/cunhapaulo/MarpX) theme collection.
+
+- **Local Storage**: Themes are stored in `public/themes/marpx/`.
+- **Registration**: Themes are fetched and registered with Marp Core at runtime in `MarpService`.
+- **Updating**: Run `node scripts/download-themes.mjs` to re-download the latest CSS files from the MarpX repository.
 
 ## Stack
 
@@ -50,7 +58,7 @@ npm start        # dev server → http://localhost:4200
 | Filesystem | `lightning-fs` — IndexedDB-backed POSIX fs | ✅ wired |
 | Preferences | Raw IndexedDB — single JSON value | ✅ wired |
 | PWA | `@angular/pwa` (Workbox service worker) | ✅ wired |
-| Tests | Vitest + jsdom | — |
+| Themes | MarpX Collection | ✅ bundled |
 
 ## Milestones
 

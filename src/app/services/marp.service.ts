@@ -1,9 +1,34 @@
 import { Injectable } from '@angular/core';
 import Marp from '@marp-team/marp-core';
 
+const MARPX_THEMES = [
+  'cantor', 'church', 'copernicus', 'einstein', 
+  'frankfurt', 'galileo', 'gauss', 'gropius', 
+  'gödel', 'haskell', 'hobbes', 'lorca', 
+  'marpx', 'newton', 'socrates', 'sparta'
+];
+
 @Injectable({ providedIn: 'root' })
 export class MarpService {
   private readonly marp = new Marp({ html: true });
+
+  constructor() {
+    this.registerMarpXThemes();
+  }
+
+  private async registerMarpXThemes(): Promise<void> {
+    for (const theme of MARPX_THEMES) {
+      try {
+        const response = await fetch(`themes/marpx/${theme}.css`);
+        if (response.ok) {
+          const css = await response.text();
+          this.marp.themeSet.add(css);
+        }
+      } catch (e) {
+        console.error(`Failed to register MarpX theme: ${theme}`, e);
+      }
+    }
+  }
 
   render(markdown: string): { html: string; css: string; slideCount: number } {
     const { html, css } = this.marp.render(markdown);
