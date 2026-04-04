@@ -13,7 +13,7 @@ import { markdown } from '@codemirror/lang-markdown';
 import { tags } from '@lezer/highlight';
 import { autocompletion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 
-// ── Themes list ──────────────────────────────────────────────────────────────
+// ── Completion Data ─────────────────────────────────────────────────────────
 
 const MARPX_THEMES = [
   'cantor', 'church', 'copernicus', 'einstein', 
@@ -21,12 +21,148 @@ const MARPX_THEMES = [
   'gödel', 'haskell', 'hobbes', 'lorca', 
   'marpx', 'newton', 'socrates', 'sparta'
 ];
-
 const BUILTIN_THEMES = ['default', 'gaia', 'uncover'];
-
 const ALL_THEMES = [...BUILTIN_THEMES, ...MARPX_THEMES].sort();
 
-// ── Syntax highlight style ───────────────────────────────────────────────────
+const GLOBAL_DIRECTIVES = [
+  { label: 'theme', detail: 'Set presentation theme' },
+  { label: 'paginate', detail: 'true/false - toggle slide numbers' },
+  { label: 'header', detail: 'Header text for all slides' },
+  { label: 'footer', detail: 'Footer text for all slides' },
+  { label: 'backgroundColor', detail: 'Default background color' },
+  { label: 'color', detail: 'Default text color' },
+  { label: 'headingDivider', detail: 'Regex to auto-split slides' },
+  { label: 'marp', detail: 'Must be true' },
+];
+
+const LOCAL_DIRECTIVES = [
+  { label: '_class', detail: 'Class for THIS slide' },
+  { label: '_backgroundColor', detail: 'Color for THIS slide' },
+  { label: '_color', detail: 'Text color for THIS slide' },
+  { label: '_header', detail: 'Header for THIS slide' },
+  { label: '_footer', detail: 'Footer for THIS slide' },
+];
+
+const MARPX_TAGS = [
+  { label: 'box', detail: 'Styled content box' },
+  { label: 'callout', detail: 'Attention block' },
+  { label: 'multicolumn', detail: 'Flex columns' },
+  { label: 'notes', detail: 'On-slide notes' },
+];
+
+const SNIPPETS = [
+  { label: '# Header 1', apply: '# ', detail: 'Main title' },
+  { label: '## Header 2', apply: '## ', detail: 'Section title' },
+  { label: '### Header 3', apply: '### ', detail: 'Subsection title' },
+  { label: '--- New Slide', apply: '\n---\n', detail: 'Slide separator' },
+  { label: '![bg] Background', apply: '![bg](url)', detail: 'Full slide image' },
+  { label: '![bg right] Split', apply: '![bg right](url)', detail: 'Image on right half' },
+  { label: '![bg left] Split', apply: '![bg left](url)', detail: 'Image on left half' },
+  { label: '**Bold**', apply: '**text**', detail: 'Strong emphasis' },
+  { label: '*Italic*', apply: '*text*', detail: 'Emphasis' },
+];
+
+// ── Autocomplete Logic ──────────────────────────────────────────────────────
+
+function marpCompletionSource(context: CompletionContext): CompletionResult | null {
+  const fullText = context.state.doc.toString();
+  const line = context.state.doc.lineAt(context.pos);
+  const lineTextBefore = line.text.slice(0, context.pos - line.from);
+  const word = context.matchBefore(/\w*/);
+
+  // Check if we are in front-matter
+  const fmStartMatch = fullText.match(/^---\n/);
+  let isInFrontMatter = false;
+  if (fmStartMatch) {
+    const remainingText = fullText.slice(4);
+    const fmEndIndex = remainingText.indexOf('\n---');
+    if (fmEndIndex !== -1 && context.pos <= fmEndIndex + 8) {
+      isInFrontMatter = true;
+    }
+  }
+
+  // 1. Theme completion (triggered by 'theme: ')
+  const themeMatch = lineTextBefore.match(/theme:\s*(\w*)$/);
+  if (themeMatch) {
+    return {
+      from: line.from + lineTextBefore.lastIndexOf(themeMatch[1]),
+      options: ALL_THEMES.map(t => ({
+        label: t,
+        type: 'keyword',
+        detail: MARPX_THEMES.includes(t) ? 'X' : ''
+      })),
+      filter: true
+    };
+  }
+
+  // 2. MarpX Tags (triggered by '<')
+  const tagMatch = lineTextBefore.match(/<(\w*)$/);
+  if (tagMatch) {
+    return {
+      from: line.from + lineTextBefore.lastIndexOf(tagMatch[1]),
+      options: MARPX_TAGS.map(t => ({
+        label: t.label,
+        type: 'type',
+        detail: 'MarpX Tag',
+        apply: t.label + '></' + t.label + '>'
+      })),
+      filter: true
+    };
+  }
+
+  // 3. Directives inside HTML comments (triggered by '<!-- ' or '<!-- _')
+  const commentMatch = lineTextBefore.match(/<!--\s*(_?\w*)$/);
+  if (commentMatch) {
+    const isLocal = commentMatch[1].startsWith('_');
+    const options = (isLocal ? LOCAL_DIRECTIVES : [...GLOBAL_DIRECTIVES, ...LOCAL_DIRECTIVES]);
+    return {
+      from: line.from + lineTextBefore.lastIndexOf(commentMatch[1]),
+      options: options.map(d => ({
+        label: d.label,
+        type: 'property',
+        detail: d.detail,
+        apply: d.label + ': '
+      })),
+      filter: true
+    };
+  }
+
+  // 4. Front-matter specific global directives
+  if (isInFrontMatter && word) {
+    const isStartOfLine = /^(\w*)$/.test(lineTextBefore.trim());
+    if (isStartOfLine || context.explicit) {
+      return {
+        from: word.from,
+        options: GLOBAL_DIRECTIVES.map(d => ({
+          label: d.label,
+          type: 'property',
+          detail: d.detail,
+          apply: d.label + ': '
+        })),
+        filter: true
+      };
+    }
+  }
+
+  // 5. General Markdown snippets (triggered by characters OR explicit Ctrl+Space)
+  const snippetPrefix = context.matchBefore(/[#!*-]*/);
+  if (context.explicit || (snippetPrefix && snippetPrefix.from !== snippetPrefix.to)) {
+    return {
+      from: snippetPrefix ? snippetPrefix.from : context.pos,
+      options: SNIPPETS.map(s => ({
+        label: s.label,
+        type: 'text',
+        apply: s.apply,
+        detail: s.detail
+      })),
+      filter: true
+    };
+  }
+
+  return null;
+}
+
+// ── Rest of Editor Logic ────────────────────────────────────────────────────
 
 const marpHighlightStyle = HighlightStyle.define([
   {
@@ -44,8 +180,6 @@ const marpHighlightStyle = HighlightStyle.define([
     color: 'var(--cm-color-meta)' },
   { tag: tags.url, color: 'var(--cm-color-code)' },
 ]);
-
-// ── Slide separator line decoration ─────────────────────────────────────────
 
 const separatorDecoration = Decoration.line({
   attributes: { class: 'cm-marp-separator' },
@@ -80,30 +214,6 @@ const separatorPlugin = ViewPlugin.fromClass(
   },
   { decorations: v => v.decorations },
 );
-
-// ── Autocomplete ─────────────────────────────────────────────────────────────
-
-function themeCompletionSource(context: CompletionContext): CompletionResult | null {
-  const line = context.state.doc.lineAt(context.pos);
-  const lineText = line.text.slice(0, context.pos - line.from);
-  
-  // Match 'theme: ' followed by optional partial theme name
-  const match = lineText.match(/^theme:\s*(\w*)$/);
-  if (!match) return null;
-
-  return {
-    from: line.from + lineText.lastIndexOf(match[1]),
-    options: ALL_THEMES.map(theme => ({
-      label: theme,
-      type: 'keyword',
-      detail: MARPX_THEMES.includes(theme) ? 'X' : '',
-      boost: theme === 'default' ? 1 : 0
-    })),
-    filter: true
-  };
-}
-
-// ── Base editor theme ────────────────────────────────────────────────────────
 
 const marpBaseTheme = EditorView.theme({
   '&': {
@@ -142,7 +252,6 @@ const marpBaseTheme = EditorView.theme({
     opacity: '0.5',
     fontStyle: 'normal',
   },
-  // Autocomplete styling to match M3 Expressive
   '.cm-tooltip-autocomplete': {
     border: '1px solid var(--outline)',
     backgroundColor: 'var(--surface) !important',
@@ -170,18 +279,18 @@ const marpBaseTheme = EditorView.theme({
   },
   '.cm-completionDetail': {
     marginLeft: '12px',
-    fontWeight: 'bold',
+    fontWeight: 'normal',
     color: 'var(--color-plasma)',
+    opacity: '0.7',
     fontSize: '0.75rem',
     flex: '1',
     textAlign: 'right',
   },
   'li[aria-selected] .cm-completionDetail': {
     color: 'white',
+    opacity: '1',
   }
 });
-
-// ── Public extension factory ─────────────────────────────────────────────────
 
 export function createMarpExtensions(
   onChange: (content: string) => void,
@@ -196,7 +305,7 @@ export function createMarpExtensions(
     separatorPlugin,
     EditorView.lineWrapping,
     autocompletion({
-      override: [themeCompletionSource]
+      override: [marpCompletionSource]
     }),
     EditorView.updateListener.of(update => {
       if (update.docChanged) {
