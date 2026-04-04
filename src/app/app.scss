@@ -8,7 +8,7 @@
 }
 
 .app-container {
-  flex: 1;
+  height: 100%;
   background: var(--surface);
 }
 
@@ -150,6 +150,13 @@
 .tab-group {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  height: 100%;
   overflow: hidden;
+
+  // Ensure internal tab body expands
+  ::ng-deep .mat-mdc-tab-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
 }
