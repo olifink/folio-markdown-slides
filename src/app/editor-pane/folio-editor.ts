@@ -16,9 +16,9 @@ import { autocompletion, CompletionContext, CompletionResult } from '@codemirror
 // ── Completion Data ─────────────────────────────────────────────────────────
 
 const MARPX_THEMES = [
-  'cantor', 'church', 'copernicus', 'einstein', 
-  'frankfurt', 'galileo', 'gauss', 'gropius', 
-  'gödel', 'haskell', 'hobbes', 'lorca', 
+  'cantor', 'church', 'copernicus', 'einstein',
+  'frankfurt', 'galileo', 'gauss', 'gropius',
+  'gödel', 'haskell', 'hobbes', 'lorca',
   'marpx', 'newton', 'socrates', 'sparta'
 ];
 const BUILTIN_THEMES = ['default', 'gaia', 'uncover'];
@@ -51,31 +51,31 @@ const MARPX_TAGS = [
 ];
 
 const CODE_FENCE_LANGUAGES = [
-  { label: 'mermaid',     detail: 'Diagram (flowchart, sequence, …)' },
-  { label: 'javascript',  detail: 'JavaScript' },
-  { label: 'typescript',  detail: 'TypeScript' },
-  { label: 'python',      detail: 'Python' },
-  { label: 'html',        detail: 'HTML' },
-  { label: 'css',         detail: 'CSS' },
-  { label: 'scss',        detail: 'SCSS' },
-  { label: 'json',        detail: 'JSON' },
-  { label: 'yaml',        detail: 'YAML' },
-  { label: 'bash',        detail: 'Bash / Shell' },
-  { label: 'sql',         detail: 'SQL' },
-  { label: 'java',        detail: 'Java' },
-  { label: 'c',           detail: 'C' },
-  { label: 'cpp',         detail: 'C++' },
-  { label: 'csharp',      detail: 'C#' },
-  { label: 'rust',        detail: 'Rust' },
-  { label: 'go',          detail: 'Go' },
-  { label: 'ruby',        detail: 'Ruby' },
-  { label: 'php',         detail: 'PHP' },
-  { label: 'swift',       detail: 'Swift' },
-  { label: 'kotlin',      detail: 'Kotlin' },
-  { label: 'r',           detail: 'R' },
-  { label: 'markdown',    detail: 'Markdown' },
-  { label: 'xml',         detail: 'XML' },
-  { label: 'diff',        detail: 'Diff / Patch' },
+  { label: 'mermaid', detail: 'Diagram (flowchart, sequence, …)' },
+  { label: 'javascript', detail: 'JavaScript' },
+  { label: 'typescript', detail: 'TypeScript' },
+  { label: 'python', detail: 'Python' },
+  { label: 'html', detail: 'HTML' },
+  { label: 'css', detail: 'CSS' },
+  { label: 'scss', detail: 'SCSS' },
+  { label: 'json', detail: 'JSON' },
+  { label: 'yaml', detail: 'YAML' },
+  { label: 'bash', detail: 'Bash / Shell' },
+  { label: 'sql', detail: 'SQL' },
+  { label: 'java', detail: 'Java' },
+  { label: 'c', detail: 'C' },
+  { label: 'cpp', detail: 'C++' },
+  { label: 'csharp', detail: 'C#' },
+  { label: 'rust', detail: 'Rust' },
+  { label: 'go', detail: 'Go' },
+  { label: 'ruby', detail: 'Ruby' },
+  { label: 'php', detail: 'PHP' },
+  { label: 'swift', detail: 'Swift' },
+  { label: 'kotlin', detail: 'Kotlin' },
+  { label: 'r', detail: 'R' },
+  { label: 'markdown', detail: 'Markdown' },
+  { label: 'xml', detail: 'XML' },
+  { label: 'diff', detail: 'Diff / Patch' },
 ];
 
 const SNIPPETS = [
@@ -90,7 +90,7 @@ const SNIPPETS = [
   { label: '$$ Math Block', apply: '$$\nformula\n$$', detail: 'Block formula' },
   { label: '== Highlight ==', apply: '==text==', detail: 'Mark text' },
   { label: '[^1] Footnote', apply: '[^1]', detail: 'Add reference' },
-  { label: '``` Code block', apply: '```\n\n```', detail: 'Fenced code block' },
+  { label: '``` Code block', apply: '```', detail: 'Fenced code block' },
   { label: ':rocket: Rocket', apply: ':rocket:', detail: 'Emoji' },
   { label: ':bulb: Idea', apply: ':bulb:', detail: 'Emoji' },
 ];
@@ -217,17 +217,21 @@ function marpCompletionSource(context: CompletionContext): CompletionResult | nu
 const marpHighlightStyle = HighlightStyle.define([
   {
     tag: [tags.heading1, tags.heading2, tags.heading3,
-          tags.heading4, tags.heading5, tags.heading6],
+    tags.heading4, tags.heading5, tags.heading6],
     color: 'var(--cm-color-heading)',
     fontWeight: 'bold',
   },
-  { tag: tags.strong,   color: 'var(--cm-color-emphasis)', fontWeight: 'bold' },
+  { tag: tags.strong, color: 'var(--cm-color-emphasis)', fontWeight: 'bold' },
   { tag: tags.emphasis, color: 'var(--cm-color-emphasis)', fontStyle: 'italic' },
   { tag: tags.monospace, color: 'var(--cm-color-code)' },
-  { tag: [tags.comment, tags.blockComment, tags.lineComment],
-    color: 'var(--cm-color-comment)', fontStyle: 'italic' },
-  { tag: [tags.meta, tags.keyword, tags.propertyName],
-    color: 'var(--cm-color-meta)' },
+  {
+    tag: [tags.comment, tags.blockComment, tags.lineComment],
+    color: 'var(--cm-color-comment)', fontStyle: 'italic'
+  },
+  {
+    tag: [tags.meta, tags.keyword, tags.propertyName],
+    color: 'var(--cm-color-meta)'
+  },
   { tag: tags.url, color: 'var(--cm-color-code)' },
 ]);
 
@@ -361,12 +365,12 @@ export function createFolioExtensions(
       if (update.docChanged) {
         onChange(update.state.doc.toString());
       }
-      
+
       if (update.selectionSet || update.docChanged) {
         const fullText = update.state.doc.toString();
         const pos = update.state.selection.main.head;
         const textBefore = fullText.slice(0, pos);
-        
+
         const linesBefore = textBefore.split('\n');
         let separatorsBefore = 0;
         for (const line of linesBefore) {
@@ -387,7 +391,7 @@ export function createFolioExtensions(
         } else {
           slideIndex = separatorsBefore;
         }
-        
+
         onCursorMove(slideIndex);
       }
     }),
