@@ -37,7 +37,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  padding: 0.25rem 0;
+  padding: 0.25rem 0.75rem;
   padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
   flex-shrink: 0;
   background: var(--surface-container);
@@ -51,6 +51,12 @@
   min-width: 4rem;
   text-align: center;
   user-select: none;
+}
+
+.prose-info {
+  button {
+    color: var(--on-surface-variant);
+  }
 }
 
 // ── Present FAB ───────────────────────────────────────────────────────────────

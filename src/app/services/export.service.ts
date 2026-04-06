@@ -21,7 +21,7 @@ export class ExportService {
       fullHtml = this.marpService.buildSrcdoc(html, css, true, 'slides');
     } else {
       const { html } = this.marpService.renderProse(markdown);
-      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose');
+      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose', 'paged');
     }
 
     const blob = new Blob([fullHtml], { type: 'text/html' });
@@ -38,7 +38,7 @@ export class ExportService {
       fullHtml = this.marpService.buildSrcdoc(html, css, true, 'slides');
     } else {
       const { html } = this.marpService.renderProse(markdown);
-      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose');
+      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose', 'paged');
     }
     
     const printFrame = document.createElement('iframe');

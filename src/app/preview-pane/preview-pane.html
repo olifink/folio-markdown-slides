@@ -43,9 +43,13 @@
     </button>
   } @else {
     <div class="prose-info">
-      <span class="page-counter">
-        {{ store.slideCount() }} {{ store.slideCount() === 1 ? 'page' : 'pages' }}
-      </span>
+      @if (store.proseViewMode() === 'paged') {
+        <span class="page-counter">
+          VIEW: PAGED &middot; {{ store.slideCount() }} {{ store.slideCount() === 1 ? 'page' : 'pages' }}
+        </span>
+      } @else {
+        <span class="page-counter">VIEW: FLOW</span>
+      }
     </div>
   }
 </div>

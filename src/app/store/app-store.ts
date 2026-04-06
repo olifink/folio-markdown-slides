@@ -61,6 +61,7 @@ export class AppStore {
   readonly currentMarkdown = signal('');
   readonly currentSlideIndex = signal(0);
   readonly slideCount = signal(1);
+  readonly proseViewMode = signal<'flow' | 'paged'>('flow');
 
   readonly documentType = computed<'slides' | 'prose'>(() => {
     const md = this.currentMarkdown();
@@ -107,11 +108,11 @@ export class AppStore {
     } else if (list.length > 0) {
       await this.openFile(list[0]);
     } else {
-      await this.createFile('Welcome.md', SAMPLE_MARKDOWN);
+      await this.createFile('Welcome.md', SAMPLE_PROSE);
     }
   }
 
-  async createFile(filename: string, content: string = SAMPLE_MARKDOWN): Promise<void> {
+  async createFile(filename: string, content: string = SAMPLE_PROSE): Promise<void> {
     let finalName = filename;
     if (!finalName.endsWith('.md')) finalName += '.md';
     
@@ -184,6 +185,10 @@ export class AppStore {
     const minWidth = 200;
     const maxWidth = window.innerWidth - 200;
     this.editorWidth.set(Math.max(minWidth, Math.min(width, maxWidth)));
+  }
+
+  setProseViewMode(mode: 'flow' | 'paged'): void {
+    this.proseViewMode.set(mode);
   }
 
   setSlideCount(count: number): void {

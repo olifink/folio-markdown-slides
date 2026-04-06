@@ -41,6 +41,24 @@
 
       <span class="toolbar__spacer"></span>
 
+      @if (store.documentType() === 'prose') {
+        <mat-button-toggle-group 
+          [value]="store.proseViewMode()" 
+          (change)="store.setProseViewMode($event.value)"
+          class="toolbar__prose-toggle"
+          aria-label="Prose view mode"
+        >
+          <mat-button-toggle value="flow">
+            <mat-icon>article</mat-icon>
+            <span>Flow</span>
+          </mat-button-toggle>
+          <mat-button-toggle value="paged">
+            <mat-icon>import_contacts</mat-icon>
+            <span>Paged</span>
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      }
+
       <button mat-icon-button [matMenuTriggerFor]="exportMenu" aria-label="Export document" matTooltip="Export">
         <mat-icon>download</mat-icon>
       </button>

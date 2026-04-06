@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import Marp from '@marp-team/marp-core';
 // @ts-ignore
+import MarkdownIt from 'markdown-it';
+// @ts-ignore
 import mark from 'markdown-it-mark';
 // @ts-ignore
 import footnote from 'markdown-it-footnote';
@@ -27,22 +29,30 @@ export class MarpService {
     }
   });
 
-  constructor() {
-    this.marp.markdown
-      .use(mark)
-      .use(footnote)
-      .use(deflist)
-      .use(container, 'container');
+  private readonly proseMarkdown = new MarkdownIt({
+    html: true,
+    breaks: true,
+    linkify: true,
+    typographer: true,
+  });
 
-    // Add Mermaid support to markdown-it
-    const defaultFence = this.marp.markdown.renderer.rules.fence;
-    this.marp.markdown.renderer.rules.fence = (tokens: any[], idx: number, options: any, env: any, self: any) => {
-      const token = tokens[idx];
-      if (token.info === 'mermaid') {
-        return `<div class="mermaid-container"><pre class="mermaid">${token.content}</pre></div>`;
-      }
-      return defaultFence!(tokens, idx, options, env, self);
-    };
+  constructor() {
+    // Shared plugin configuration
+    [this.marp.markdown, this.proseMarkdown].forEach(md => {
+      md.use(mark)
+        .use(footnote)
+        .use(deflist)
+        .use(container, 'container');
+
+      const defaultFence = md.renderer.rules.fence;
+      md.renderer.rules.fence = (tokens: any[], idx: number, options: any, env: any, self: any) => {
+        const token = tokens[idx];
+        if (token.info === 'mermaid') {
+          return `<div class="mermaid-container"><pre class="mermaid">${token.content}</pre></div>`;
+        }
+        return defaultFence!(tokens, idx, options, env, self);
+      };
+    });
 
     this.registerMarpXThemes();
   }
@@ -70,15 +80,15 @@ export class MarpService {
   renderProse(markdown: string): { html: string } {
     // Strip YAML frontmatter before rendering
     const body = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
-    const html = this.marp.markdown.render(body);
+    const html = this.proseMarkdown.render(body);
     return { html };
   }
 
-  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, type: 'slides' | 'prose' = 'slides'): string {
+  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, type: 'slides' | 'prose' = 'slides', proseMode: 'flow' | 'paged' = 'flow'): string {
     if (type === 'slides') {
       return this.buildSlidesSrcdoc(html, css, isExport);
     } else {
-      return this.buildProseSrcdoc(html, isExport);
+      return this.buildProseSrcdoc(html, isExport, proseMode);
     }
   }
 
@@ -203,18 +213,18 @@ ${navScript}
 </html>`;
   }
 
-  private buildProseSrcdoc(html: string, isExport: boolean): string {
-    const pagedScript = isExport
-      ? '' // Paged.js not strictly needed for print if @page CSS is enough, but polyfill helps with complex layout
-      : `<script src="js/mermaid.min.js"></script>
+  private buildProseSrcdoc(html: string, isExport: boolean, proseMode: 'flow' | 'paged' = 'flow'): string {
+    const isPaged = proseMode === 'paged';
+    
+    let pagedScript = '';
+    if (isPaged && !isExport) {
+      pagedScript = `<script src="js/mermaid.min.js"></script>
 <script src="js/paged.polyfill.min.js"></script>
 <script>
 window.PagedConfig = {
   auto: false,
   after: function(flow) {
     window.parent.postMessage({ pageCount: flow.total }, '*');
-    
-    // Initialize Mermaid after Paged.js has fragmented the DOM
     if (window.mermaid) {
       mermaid.initialize({
         startOnLoad: false,
@@ -231,13 +241,25 @@ window.addEventListener('DOMContentLoaded', function() {
   window.PagedPolyfill.preview();
 });
 </script>`;
+    } else if (!isExport) {
+      pagedScript = `<script src="js/mermaid.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.mermaid) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      flowchart: { useMaxWidth: false, htmlLabels: true }
+    });
+    mermaid.run({ querySelector: '.mermaid' });
+  }
+});
+</script>`;
+    }
 
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Folio Document</title>
-<style>
+    const pagedStyles = isPaged ? `
   /* Page geometry — A4 portrait */
   @page {
     size: A4 portrait;
@@ -250,22 +272,94 @@ window.addEventListener('DOMContentLoaded', function() {
     display: none;
   }
 
-  /* Prose typography */
   body {
-    font-family: 'Georgia', 'Times New Roman', serif;
-    font-size: 11pt;
-    line-height: 1.7;
-    color: #1a1a1a;
     background: #f0f0f0;
-    margin: 0;
   }
-  
-  /* Reset for exported HTML */
-  ${isExport ? 'body { background: white; }' : ''}
 
   .markdown-body {
     background: white;
   }
+
+  /* Paged.js page boxes */
+  .pagedjs_page {
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    margin: 0 auto 24px;
+  }
+  
+  ${isExport ? '.pagedjs_page { box-shadow: none; margin: 0; }' : ''}
+` : `
+  body {
+    background: white;
+    padding: 2rem;
+  }
+  
+  hr {
+    border: none;
+    border-top: 1px solid var(--outline-variant, #eee);
+    margin: 2rem 0;
+  }
+`;
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folio Document</title>
+<style>
+  /* Base scaling and reset */
+  html, body {
+    width: 100%;
+    min-width: 100%;
+    margin: 0;
+    padding: 0;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* Prose typography - Material 3 inspired */
+  html, body, .markdown-body {
+    all: initial;
+    display: block;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 16px !important;
+    line-height: 1.5;
+    color: #1d1b20; /* M3 On Surface */
+    background: white;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  p, li, td, th, blockquote, div, span, b, strong, em, i, a {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+    display: inline; /* inline by default for all:initial */
+  }
+
+  p, div, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre, table {
+    display: block !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Headings - M3 Proportions */
+  h1 { font-size: 2rem !important; font-weight: 400 !important; margin-top: 2rem !important; }
+  h2 { font-size: 1.5rem !important; font-weight: 400 !important; margin-top: 1.5rem !important; }
+  h3 { font-size: 1.25rem !important; font-weight: 500 !important; margin-top: 1.2rem !important; }
+  
+  strong, b { font-weight: 600 !important; }
+  em, i { font-style: italic !important; }
+
+  ul, ol { padding-left: 1.5rem !important; }
+  li { display: list-item !important; margin-bottom: 0.5rem !important; }
+  
+  /* Reset for exported HTML */
+  ${isExport ? 'body { background: white; }' : ''}
 
   h1, h2, h3, h4, h5, h6 {
     font-family: system-ui, -apple-system, sans-serif;
@@ -319,14 +413,7 @@ window.addEventListener('DOMContentLoaded', function() {
     margin: 1em 0;
   }
 
-  /* Paged.js page boxes */
-  .pagedjs_page {
-    background: white;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    margin: 0 auto 24px;
-  }
-  
-  ${isExport ? '.pagedjs_page { box-shadow: none; margin: 0; }' : ''}
+  ${pagedStyles}
 </style>
 </head>
 <body>

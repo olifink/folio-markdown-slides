@@ -12,6 +12,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { EditorPaneComponent } from './editor-pane/editor-pane';
 import { PreviewPaneComponent } from './preview-pane/preview-pane';
 import { FileListDrawerComponent } from './file-list-drawer/file-list-drawer';
@@ -43,6 +44,7 @@ const COLOR_SCHEME_LABEL: Record<string, string> = {
     MatSnackBarModule,
     MatMenuModule,
     MatDialogModule,
+    MatButtonToggleModule,
     CdkDrag,
     EditorPaneComponent,
     PreviewPaneComponent,
