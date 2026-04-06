@@ -50,13 +50,15 @@ export class ProseService {
       ? `<script>${this.mermaidContent}</script>`
       : `<script src="js/mermaid.min.js"></script>`;
 
-    const mermaidTheme = `document.documentElement.dataset.colorScheme === 'dark' ||
+    const mermaidThemeExpr = `document.documentElement.dataset.colorScheme === 'dark' ||
                (!document.documentElement.dataset.colorScheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
                ? 'dark' : 'default'`;
 
-    const mermaidConfig = `{
+    // Exports (HTML download + print-to-PDF) always use the light theme regardless
+    // of the user's colour scheme — printed pages should not be dark.
+    const mermaidConfig = (export_: boolean) => `{
       startOnLoad: false,
-      theme: ${mermaidTheme},
+      theme: ${export_ ? "'default'" : mermaidThemeExpr},
       securityLevel: 'loose',
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
       flowchart: { useMaxWidth: false, htmlLabels: true }
@@ -72,7 +74,7 @@ window.PagedConfig = {
   after: function(flow) {
     window.parent.postMessage({ pageCount: flow.total }, '*');
     if (window.mermaid) {
-      mermaid.initialize(${mermaidConfig});
+      mermaid.initialize(${mermaidConfig(false)});
       mermaid.run({ querySelector: '.mermaid' });
     }
   }
@@ -87,7 +89,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   if (window.mermaid) {
-    mermaid.initialize(${mermaidConfig});
+    mermaid.initialize(${mermaidConfig(!standalone)});
     mermaid.run({ querySelector: '.mermaid' }).then(function() {
       window.parent.postMessage({ type: 'printReady' }, '*');
     });
@@ -102,7 +104,7 @@ window.addEventListener('DOMContentLoaded', function() {
 <script>
 window.addEventListener('DOMContentLoaded', function() {
   if (window.mermaid) {
-    mermaid.initialize(${mermaidConfig});
+    mermaid.initialize(${mermaidConfig(false)});
     mermaid.run({ querySelector: '.mermaid' });
   }
 });
