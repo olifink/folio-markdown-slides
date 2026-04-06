@@ -232,7 +232,7 @@ const marpHighlightStyle = HighlightStyle.define([
 ]);
 
 const separatorDecoration = Decoration.line({
-  attributes: { class: 'cm-marp-separator' },
+  attributes: { class: 'cm-folio-separator' },
 });
 
 function buildSeparatorDecorations(view: EditorView): DecorationSet {
@@ -265,7 +265,7 @@ const separatorPlugin = ViewPlugin.fromClass(
   { decorations: v => v.decorations },
 );
 
-const marpBaseTheme = EditorView.theme({
+const folioBaseTheme = EditorView.theme({
   '&': {
     height: '100%',
     fontSize: '1rem',
@@ -292,7 +292,7 @@ const marpBaseTheme = EditorView.theme({
     backgroundColor: 'rgba(124, 77, 255, 0.18)',
   },
   '.cm-gutters': { display: 'none' },
-  '.cm-marp-separator': {
+  '.cm-folio-separator': {
     background: 'var(--cm-separator-bg) !important',
     color: 'var(--cm-separator-color) !important',
     fontWeight: 'bold',
@@ -342,7 +342,7 @@ const marpBaseTheme = EditorView.theme({
   }
 });
 
-export function createMarpExtensions(
+export function createFolioExtensions(
   onChange: (content: string) => void,
   onCursorMove: (slideIndex: number) => void,
 ): Extension[] {
@@ -350,7 +350,7 @@ export function createMarpExtensions(
     history(),
     keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
     markdown(),
-    marpBaseTheme,
+    folioBaseTheme,
     syntaxHighlighting(marpHighlightStyle),
     separatorPlugin,
     EditorView.lineWrapping,

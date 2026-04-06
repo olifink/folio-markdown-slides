@@ -31,27 +31,44 @@ export class PreviewPaneComponent {
 
   /**
    * First emission is immediate (no debounce) so the preview populates on load.
-   * Subsequent emissions debounce 300ms to avoid re-rendering on every keystroke.
+   * Subsequent emissions debounce to avoid re-rendering on every keystroke.
+   * Prose uses a longer debounce as Paged.js fragmentation is expensive.
    */
   private readonly rendered = toSignal(
     toObservable(this.store.currentMarkdown).pipe(
       switchMap((md, index) =>
-        index === 0 ? of(md) : timer(300).pipe(map(() => md)),
+        index === 0 ? of(md) : timer(this.store.documentType() === 'prose' ? 600 : 300).pipe(map(() => md)),
       ),
-      map(md => this.marpService.render(md)),
+      map(md => {
+        if (this.store.documentType() === 'slides') {
+          return { type: 'slides' as const, ...this.marpService.render(md) };
+        } else {
+          return { type: 'prose' as const, ...this.marpService.renderProse(md) };
+        }
+      }),
     ),
-    { initialValue: this.marpService.render(this.store.currentMarkdown()) },
+    { 
+      initialValue: this.store.documentType() === 'slides' 
+        ? { type: 'slides' as const, ...this.marpService.render(this.store.currentMarkdown()) }
+        : { type: 'prose' as const, ...this.marpService.renderProse(this.store.currentMarkdown()) }
+    },
   );
 
   constructor() {
-    // Sync slide index when the iframe navigates via keyboard (e.g. in fullscreen)
+    // Sync slide index or page count when the iframe sends messages
     fromEvent<MessageEvent>(window, 'message')
       .pipe(
         filter(e => e.source === this.iframeRef()?.nativeElement.contentWindow),
-        filter(e => typeof e.data?.slideIndex === 'number'),
         takeUntilDestroyed(),
       )
-      .subscribe(e => this.store.goToSlide(e.data.slideIndex));
+      .subscribe(e => {
+        if (typeof e.data?.slideIndex === 'number') {
+          this.store.goToSlide(e.data.slideIndex);
+        }
+        if (typeof e.data?.pageCount === 'number') {
+          this.store.setSlideCount(e.data.pageCount);
+        }
+      });
 
     // Focus iframe when entering fullscreen so keyboard navigation works instantly
     merge(
@@ -64,24 +81,31 @@ export class PreviewPaneComponent {
       }
     });
 
-    // Update iframe srcdoc and store slide count whenever rendered output changes
+    // Update iframe srcdoc and store slide/page count whenever rendered output changes
     effect(() => {
       const result = this.rendered();
       const iframe = this.iframeRef();
       if (!iframe) return;
-      this.store.setSlideCount(result.slideCount);
-      iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css);
+      
+      if (result.type === 'slides') {
+        this.store.setSlideCount(result.slideCount);
+        iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false, 'slides');
+      } else {
+        // Page count is set via postMessage after Paged.js finishes
+        iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, '', false, 'prose');
+      }
     });
 
-    // Scroll to current slide (also fires via onFrameLoad after srcdoc reloads)
+    // Scroll to current slide (only relevant for slides mode)
     effect(() => {
+      if (this.store.documentType() !== 'slides') return;
       const idx = this.store.currentSlideIndex();
       this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
     });
 
     // Re-sync slide position when the tab becomes visible after being hidden
     effect(() => {
-      if (!this.active()) return;
+      if (!this.active() || this.store.documentType() !== 'slides') return;
       const idx = this.store.currentSlideIndex();
       this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
     });

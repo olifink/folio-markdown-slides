@@ -25,7 +25,8 @@ Both modes share the same editor, the same file management, and the same export 
 
 ```bash
 npm install
-npm start        # dev server → http://localhost:4200
+node scripts/download-pagedjs.mjs # One-time setup
+npm start                         # dev server → http://localhost:4200
 ```
 
 ## Commands
@@ -36,6 +37,7 @@ npm start        # dev server → http://localhost:4200
 | `npm run build` | Production build → `dist/` |
 | `npm run build -- --configuration github` | Build for GitHub Pages (sub-path base href) |
 | `node scripts/download-themes.mjs` | Refresh MarpX theme collection from GitHub |
+| `node scripts/download-pagedjs.mjs` | Download Paged.js polyfill |
 | `npm test` | Run unit tests with Vitest |
 | `npx prettier --write .` | Format all files |
 
@@ -43,14 +45,16 @@ npm start        # dev server → http://localhost:4200
 
 ## What works today
 
+- **Multi-document support** — automatically switch between Slides and Prose modes
 - **Split-pane layout** — editor left, preview right on wide screens (≥ 840 px); Edit / Preview tabs on narrow
-- **Live Marp preview** — typing in the editor re-renders the iframe within 300 ms; first load is immediate
+- **Live Marp preview** — typing in the editor re-renders slides in real time
+- **Paginated Prose preview** — powered by Paged.js, supports standard Markdown and page breaks via `---`
 - **File management** — create, open, and delete files via a Material 3 sidebar; M3 list items with explicit actions and Undo support
 - **Inline renaming** — click the filename in the app bar to rename; commits on Enter/blur, cancels on Escape
 - **Persistence** — all files saved locally via `lightning-fs` (IndexedDB POSIX fs); preferences stored in a dedicated IndexedDB store
 - **PWA** — fully functional offline via Angular Service Worker; pre-caches app shell, assets, and fonts
-- **Export** — download as `.md`, self-contained `.html`, or Print to PDF
-- **Presentation mode** — full-screen with keyboard and touch swipe navigation
+- **Export** — download as `.md`, self-contained `.html` (with Paged.js bundled for prose), or Print to PDF
+- **Presentation mode** — full-screen slides with keyboard and touch swipe navigation
 - **Slide sync** — preview scrolls to the slide matching the cursor position
 - **MarpX themes** — 16 professional themes bundled (cantor, einstein, socrates, …)
 - **Cheat bar** — six snippet categories; items insert at cursor and display a monospace hint

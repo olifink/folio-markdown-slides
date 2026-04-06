@@ -6,7 +6,7 @@ export type ColorScheme = 'system' | 'light' | 'dark';
 
 const COLOR_SCHEME_CYCLE: ColorScheme[] = ['system', 'light', 'dark'];
 
-const SAMPLE_MARKDOWN = `---
+export const SAMPLE_MARKDOWN = `---
 marp: true
 ---
 
@@ -38,16 +38,39 @@ Folio supports three built-in Marp themes:
 Hit the **▶ Present** button to go full-screen.
 `;
 
+export const SAMPLE_PROSE = `# My First Document
+
+Write your content here. Use standard Markdown — headings, lists, **bold**, *italic*, footnotes[^1], tables, and code blocks all work.
+
+---
+
+## Page Two
+
+Use \`---\` to start a new page. It works the same way as in slide mode.
+
+[^1]: Footnotes render at the bottom of the page they appear on.
+`;
+
 @Injectable({ providedIn: 'root' })
 export class AppStore {
   private readonly fs = inject(FsService);
   private readonly prefsService = inject(PrefsService);
 
-  readonly presentationList = signal<string[]>([]);
+  readonly fileList = signal<string[]>([]);
   readonly currentFile = signal<string | null>(null);
   readonly currentMarkdown = signal('');
   readonly currentSlideIndex = signal(0);
   readonly slideCount = signal(1);
+
+  readonly documentType = computed<'slides' | 'prose'>(() => {
+    const md = this.currentMarkdown();
+    const frontmatterMatch = md.trimStart().match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (frontmatterMatch && /^marp:\s*true\s*$/m.test(frontmatterMatch[1])) {
+      return 'slides';
+    }
+    return 'prose';
+  });
+
   readonly isDirty = signal(false);
   readonly prefs = signal<AppPrefs>({
     lastOpenFile: null,
@@ -77,7 +100,7 @@ export class AppStore {
     this.prefs.set(prefs);
     
     await this.refreshList();
-    const list = this.presentationList();
+    const list = this.fileList();
 
     if (prefs.lastOpenFile && list.includes(prefs.lastOpenFile)) {
       await this.openFile(prefs.lastOpenFile);
@@ -117,7 +140,7 @@ export class AppStore {
     await this.refreshList();
     
     if (this.currentFile() === filename) {
-      const list = this.presentationList();
+      const list = this.fileList();
       if (list.length > 0) {
         await this.openFile(list[0]);
       } else {
@@ -148,8 +171,8 @@ export class AppStore {
   }
 
   private async refreshList(): Promise<void> {
-    const list = await this.fs.listPresentations();
-    this.presentationList.set(list);
+    const list = await this.fs.listFiles();
+    this.fileList.set(list);
   }
 
   setMarkdown(value: string): void {

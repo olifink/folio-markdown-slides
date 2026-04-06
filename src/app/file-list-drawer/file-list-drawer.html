@@ -14,13 +14,18 @@
     </button>
   </div>
 
-  <button mat-icon-button (click)="onNewPresentation()" matTooltip="New presentation">
-    <mat-icon>add</mat-icon>
-  </button>
+  <div class="create-actions">
+    <button mat-icon-button (click)="onNewProse()" matTooltip="New prose document">
+      <mat-icon>add_notes</mat-icon>
+    </button>
+    <button mat-icon-button (click)="onNewPresentation()" matTooltip="New presentation slides">
+      <mat-icon>slideshow</mat-icon>
+    </button>
+  </div>
 </div>
 
 <div class="presentation-list">
-  @for (file of store.presentationList(); track file) {
+  @for (file of store.fileList(); track file) {
     <div class="presentation-card"
          [class.active]="store.currentFile() === file"
          (click)="onFileClick(file)">
@@ -39,24 +44,29 @@
         
         <button mat-icon-button class="delete-button" 
                 (click)="onDelete($event, file)" 
-                matTooltip="Delete deck">
+                matTooltip="Delete document">
           <mat-icon>delete_outline</mat-icon>
         </button>
       </div>
     </div>
   } @empty {
     <div class="empty-state">
-      <p>No presentations yet.</p>
-      <button mat-flat-button (click)="onNewPresentation()">
-        Create your first deck
-      </button>
+      <p>No documents yet.</p>
+      <div class="empty-actions">
+        <button mat-flat-button (click)="onNewProse()">
+          Create prose
+        </button>
+        <button mat-flat-button (click)="onNewPresentation()">
+          Create slides
+        </button>
+      </div>
     </div>
   }
 </div>
 
 <div class="drawer-footer">
-  <button mat-fab extended color="tertiary" (click)="onNewPresentation()" class="new-fab">
+  <button mat-fab extended color="primary" (click)="onNewProse()" class="new-fab">
     <mat-icon>add</mat-icon>
-    New deck
+    New document
   </button>
 </div>

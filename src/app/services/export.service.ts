@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { MarpService } from './marp.service';
+import { AppStore } from '../store/app-store';
 
 @Injectable({ providedIn: 'root' })
 export class ExportService {
   private readonly marpService = inject(MarpService);
+  private readonly store = inject(AppStore);
 
   downloadMarkdown(filename: string, content: string): void {
     const blob = new Blob([content], { type: 'text/markdown' });
@@ -11,17 +13,33 @@ export class ExportService {
   }
 
   downloadHtml(filename: string, markdown: string): void {
-    const { html, css } = this.marpService.render(markdown);
-    const fullHtml = this.marpService.buildSrcdoc(html, css, true);
+    const type = this.store.documentType();
+    let fullHtml = '';
+
+    if (type === 'slides') {
+      const { html, css } = this.marpService.render(markdown);
+      fullHtml = this.marpService.buildSrcdoc(html, css, true, 'slides');
+    } else {
+      const { html } = this.marpService.renderProse(markdown);
+      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose');
+    }
+
     const blob = new Blob([fullHtml], { type: 'text/html' });
-    
     const htmlFilename = filename.replace(/\.md$/, '') + '.html';
     this.download(htmlFilename, blob);
   }
 
   print(markdown: string): void {
-    const { html, css } = this.marpService.render(markdown);
-    const fullHtml = this.marpService.buildSrcdoc(html, css, true);
+    const type = this.store.documentType();
+    let fullHtml = '';
+
+    if (type === 'slides') {
+      const { html, css } = this.marpService.render(markdown);
+      fullHtml = this.marpService.buildSrcdoc(html, css, true, 'slides');
+    } else {
+      const { html } = this.marpService.renderProse(markdown);
+      fullHtml = this.marpService.buildSrcdoc(html, '', true, 'prose');
+    }
     
     const printFrame = document.createElement('iframe');
     printFrame.style.position = 'fixed';

@@ -8,40 +8,40 @@ export class FsService {
 
   async init(): Promise<void> {
     try {
-      await this.promises.mkdir('/presentations');
+      await this.promises.mkdir('/documents');
     } catch (e: any) {
       if (e.code !== 'EEXIST') throw e;
     }
   }
 
-  async listPresentations(): Promise<string[]> {
-    const files = await this.promises.readdir('/presentations');
+  async listFiles(): Promise<string[]> {
+    const files = await this.promises.readdir('/documents');
     return files.filter(f => f.endsWith('.md'));
   }
 
   async readFile(filename: string): Promise<string> {
-    const data = await this.promises.readFile(`/presentations/${filename}`, { encoding: 'utf8' });
+    const data = await this.promises.readFile(`/documents/${filename}`, { encoding: 'utf8' });
     return data as string;
   }
 
   async writeFile(filename: string, content: string): Promise<void> {
-    await this.promises.writeFile(`/presentations/${filename}`, content, { 
+    await this.promises.writeFile(`/documents/${filename}`, content, { 
       encoding: 'utf8',
       mode: 0o666 
     });
   }
 
   async deleteFile(filename: string): Promise<void> {
-    await this.promises.unlink(`/presentations/${filename}`);
+    await this.promises.unlink(`/documents/${filename}`);
   }
 
   async renameFile(oldName: string, newName: string): Promise<void> {
-    await this.promises.rename(`/presentations/${oldName}`, `/presentations/${newName}`);
+    await this.promises.rename(`/documents/${oldName}`, `/documents/${newName}`);
   }
 
   async exists(filename: string): Promise<boolean> {
     try {
-      await this.promises.stat(`/presentations/${filename}`);
+      await this.promises.stat(`/documents/${filename}`);
       return true;
     } catch {
       return false;

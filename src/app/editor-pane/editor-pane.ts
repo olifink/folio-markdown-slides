@@ -14,7 +14,7 @@ import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { AppStore } from '../store/app-store';
 import { EditorService } from '../services/editor.service';
-import { createMarpExtensions } from './marp-editor';
+import { createFolioExtensions } from './folio-editor';
 import { CheatBarComponent } from './cheat-bar/cheat-bar';
 
 @Component({
@@ -38,7 +38,7 @@ export class EditorPaneComponent {
 
   private editorView: EditorView | null = null;
 
-  private readonly extensions = createMarpExtensions(
+  private readonly extensions = createFolioExtensions(
     md => this.store.setMarkdown(md),
     idx => this.store.goToSlide(idx)
   );
@@ -130,7 +130,9 @@ export class EditorPaneComponent {
       }
     } else {
       // Front matter doesn't exist, create it at the top
-      const newFm = `---\nmarp: true\n${key}: ${value}\n---\n\n`;
+      // If we're inserting a slide-specific key (like theme), add marp: true
+      const isMarpKey = ['theme', 'paginate', 'header', 'footer'].includes(key);
+      const newFm = `---\n${isMarpKey ? 'marp: true\n' : ''}${key}: ${value}\n---\n\n`;
       view.dispatch({
         changes: { from: 0, to: 0, insert: newFm }
       });

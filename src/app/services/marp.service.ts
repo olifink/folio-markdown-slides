@@ -67,7 +67,22 @@ export class MarpService {
     return { html, css, slideCount };
   }
 
-  buildSrcdoc(html: string, css: string, isExport: boolean = false): string {
+  renderProse(markdown: string): { html: string } {
+    // Strip YAML frontmatter before rendering
+    const body = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+    const html = this.marp.markdown.render(body);
+    return { html };
+  }
+
+  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, type: 'slides' | 'prose' = 'slides'): string {
+    if (type === 'slides') {
+      return this.buildSlidesSrcdoc(html, css, isExport);
+    } else {
+      return this.buildProseSrcdoc(html, isExport);
+    }
+  }
+
+  private buildSlidesSrcdoc(html: string, css: string, isExport: boolean): string {
     const navScript = isExport ? '' : `
 <script src="js/mermaid.min.js"></script>
 <script>
@@ -136,7 +151,7 @@ export class MarpService {
     if (touchEndX < touchStartX - 50) next = current + 1;
     else if (touchEndX > touchStartX + 50) next = current - 1;
     else return;
-    show(next).then(function(idx) { window.parent.postMessage({ slideIndex: actualIdx }, '*'); });
+    show(next).then(function(idx) { window.parent.postMessage({ slideIndex: idx }, '*'); });
   }, false);
 
   window.addEventListener('message', function (e) {
@@ -184,6 +199,141 @@ export class MarpService {
 <body>
 ${html}
 ${navScript}
+</body>
+</html>`;
+  }
+
+  private buildProseSrcdoc(html: string, isExport: boolean): string {
+    const pagedScript = isExport
+      ? '' // Paged.js not strictly needed for print if @page CSS is enough, but polyfill helps with complex layout
+      : `<script src="js/mermaid.min.js"></script>
+<script src="js/paged.polyfill.min.js"></script>
+<script>
+window.PagedConfig = {
+  auto: false,
+  after: function(flow) {
+    window.parent.postMessage({ pageCount: flow.total }, '*');
+    
+    // Initialize Mermaid after Paged.js has fragmented the DOM
+    if (window.mermaid) {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose',
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        flowchart: { useMaxWidth: false, htmlLabels: true }
+      });
+      mermaid.run({ querySelector: '.mermaid' });
+    }
+  }
+};
+window.addEventListener('DOMContentLoaded', function() {
+  window.PagedPolyfill.preview();
+});
+</script>`;
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Folio Document</title>
+<style>
+  /* Page geometry — A4 portrait */
+  @page {
+    size: A4 portrait;
+    margin: 20mm 22mm;
+  }
+
+  /* --- as explicit page break */
+  hr {
+    break-before: page;
+    display: none;
+  }
+
+  /* Prose typography */
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #1a1a1a;
+    background: #f0f0f0;
+    margin: 0;
+  }
+  
+  /* Reset for exported HTML */
+  ${isExport ? 'body { background: white; }' : ''}
+
+  .markdown-body {
+    background: white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin-top: 1.4em;
+    margin-bottom: 0.4em;
+    line-height: 1.2;
+  }
+  p { margin: 0 0 0.9em; }
+  
+  pre, code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88em;
+  }
+  pre {
+    background: #f5f5f5;
+    padding: 0.8em 1em;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  
+  blockquote {
+    border-left: 3px solid #aaa;
+    margin-left: 0;
+    padding-left: 1em;
+    color: #555;
+    font-style: italic;
+  }
+  
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 0.4em 0.7em;
+    text-align: left;
+  }
+  
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .mermaid-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin: 1em 0;
+  }
+
+  /* Paged.js page boxes */
+  .pagedjs_page {
+    background: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    margin: 0 auto 24px;
+  }
+  
+  ${isExport ? '.pagedjs_page { box-shadow: none; margin: 0; }' : ''}
+</style>
+</head>
+<body>
+<div class="markdown-body">
+${html}
+</div>
+${pagedScript}
 </body>
 </html>`;
   }

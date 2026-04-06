@@ -32,7 +32,7 @@
 
 // ── Slide navigation bar ──────────────────────────────────────────────────────
 
-.slide-nav {
+.slide-nav, .prose-info {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,7 +44,7 @@
   border-top: 1px solid var(--outline);
 }
 
-.slide-counter {
+.slide-counter, .page-counter {
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   color: var(--on-surface);
