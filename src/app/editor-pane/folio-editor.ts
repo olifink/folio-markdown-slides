@@ -12,6 +12,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { markdown } from '@codemirror/lang-markdown';
 import { tags } from '@lezer/highlight';
 import { autocompletion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { EMOJI_SHORTCODES } from './emoji-shortcodes';
 
 // ── Completion Data ─────────────────────────────────────────────────────────
 
@@ -91,8 +92,6 @@ const SNIPPETS = [
   { label: '== Highlight ==', apply: '==text==', detail: 'Mark text' },
   { label: '[^1] Footnote', apply: '[^1]', detail: 'Add reference' },
   { label: '``` Code block', apply: '```', detail: 'Fenced code block' },
-  { label: ':rocket: Rocket', apply: ':rocket:', detail: 'Emoji' },
-  { label: ':bulb: Idea', apply: ':bulb:', detail: 'Emoji' },
 ];
 
 // ── Autocomplete Logic ──────────────────────────────────────────────────────
@@ -194,7 +193,23 @@ function marpCompletionSource(context: CompletionContext): CompletionResult | nu
     };
   }
 
-  // 6. General Markdown snippets (triggered by characters OR explicit Ctrl+Space)
+  // 6. Emoji shortcode (triggered by ':' followed by at least one word character)
+  const emojiMatch = context.matchBefore(/:[a-z0-9_+-]*/);
+  if (emojiMatch && emojiMatch.from !== emojiMatch.to) {
+    return {
+      from: emojiMatch.from,
+      options: EMOJI_SHORTCODES.map(e => ({
+        label: `:${e.code}: ${e.emoji}`,
+        type: 'text',
+        apply: `:${e.code}:`,
+        detail: 'Emoji',
+      })),
+      filter: true,
+      validFor: /^:[a-z_+][a-z0-9_+-]*:?$/,
+    };
+  }
+
+  // 7. General Markdown snippets (triggered by characters OR explicit Ctrl+Space)
   const snippetPrefix = context.matchBefore(/[#!$*=\^:`-]*/);
   if (context.explicit || (snippetPrefix && snippetPrefix.from !== snippetPrefix.to)) {
     return {

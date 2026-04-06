@@ -23,7 +23,9 @@
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('version'\\), d.get\\('main'\\), d.get\\('exports', {}\\)\\)\")",
       "Bash(node:*)",
       "Bash(ls /d/projects/my/folio/node_modules/katex/dist/*.d.ts)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('types:', d.get\\('types'\\)\\); print\\('exports:', list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:5]\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('types:', d.get\\('types'\\)\\); print\\('exports:', list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:5]\\)\")",
+      "Bash(npx tsc:*)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }
