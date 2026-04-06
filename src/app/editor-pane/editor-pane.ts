@@ -35,15 +35,17 @@ export class EditorPaneComponent {
 
   private editorView: EditorView | null = null;
 
+  private readonly extensions = createMarpExtensions(
+    md => this.store.setMarkdown(md),
+    idx => this.store.goToSlide(idx)
+  );
+
   constructor() {
     afterNextRender(() => {
       this.editorView = new EditorView({
         state: EditorState.create({
           doc: this.store.currentMarkdown(),
-          extensions: createMarpExtensions(
-            md => this.store.setMarkdown(md),
-            idx => this.store.goToSlide(idx)
-          ),
+          extensions: this.extensions,
         }),
         parent: this.editorHost().nativeElement,
       });
@@ -57,9 +59,7 @@ export class EditorPaneComponent {
       const md = this.store.currentMarkdown();
       const view = this.editorView;
       if (!view || view.state.doc.toString() === md) return;
-      view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: md },
-      });
+      view.setState(EditorState.create({ doc: md, extensions: this.extensions }));
     });
 
     this.destroyRef.onDestroy(() => this.editorView?.destroy());
