@@ -273,7 +273,7 @@ window.addEventListener('DOMContentLoaded', function() {
   }
 
   body {
-    background: #f0f0f0;
+    background: ${isExport ? 'white' : '#f0f0f0'};
   }
 
   .markdown-body {
@@ -332,6 +332,11 @@ window.addEventListener('DOMContentLoaded', function() {
     font-size: inherit;
     line-height: inherit;
     color: inherit;
+    ${isExport ? `
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    ` : ''}
   }
 
   .markdown-body p, .markdown-body ul, .markdown-body ol, 
