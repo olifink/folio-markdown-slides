@@ -31,6 +31,9 @@ export class PreviewPaneComponent {
   private readonly proseService = inject(ProseService);
   private readonly iframeRef = viewChild<ElementRef<HTMLIFrameElement>>('previewFrame');
 
+  /** Saved scroll offset (px) of the prose preview before its srcdoc is replaced. */
+  private proseScrollY = 0;
+
   /**
    * First emission is immediate (no debounce) so the preview populates on load.
    * Subsequent emissions debounce to avoid re-rendering on every keystroke.
@@ -72,6 +75,9 @@ export class PreviewPaneComponent {
         this.store.setSlideCount(result.slideCount);
         iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false);
       } else {
+        // Save scroll position before the srcdoc replacement resets it to 0
+        const scrollEl = iframe.nativeElement.contentDocument?.documentElement;
+        this.proseScrollY = scrollEl?.scrollTop ?? 0;
         // Page count is set via postMessage after Paged.js finishes
         iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme);
       }
@@ -90,12 +96,34 @@ export class PreviewPaneComponent {
       const idx = this.store.currentSlideIndex();
       this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
     });
+
+    // Receive messages from the preview iframe.
+    // pageCount: emitted by Paged.js after layout completes — update page counter and
+    //            restore scroll position (paged mode reflows asynchronously, so we can't
+    //            do this in onFrameLoad).
+    fromEvent<MessageEvent>(window, 'message')
+      .pipe(takeUntilDestroyed())
+      .subscribe(e => {
+        if (e.data?.pageCount !== undefined) {
+          this.store.setSlideCount(e.data.pageCount);
+          if (this.store.proseViewMode() === 'paged') {
+            this.iframeRef()?.nativeElement.contentWindow?.scrollTo({ top: this.proseScrollY, behavior: 'instant' });
+          }
+        }
+      });
   }
 
   /** Re-sends the active slide index after the iframe finishes loading new srcdoc content. */
   protected onFrameLoad(): void {
-    const idx = this.store.currentSlideIndex();
-    this.iframeRef()?.nativeElement.contentWindow?.postMessage({ slideIndex: idx }, '*');
+    const iframe = this.iframeRef()?.nativeElement;
+    if (!iframe) return;
+    iframe.contentWindow?.postMessage({ slideIndex: this.store.currentSlideIndex() }, '*');
+
+    // For flow mode, the document is fully laid out at load time — restore scroll immediately.
+    // Paged mode is handled after the pageCount postMessage (Paged.js runs asynchronously).
+    if (this.store.documentType() === 'prose' && this.store.proseViewMode() === 'flow') {
+      iframe.contentWindow?.scrollTo({ top: this.proseScrollY, behavior: 'instant' });
+    }
   }
 
   protected prevSlide(): void {
@@ -111,6 +139,7 @@ export class PreviewPaneComponent {
   }
 
   protected toggleProseMode(): void {
+    this.proseScrollY = 0; // layout changes completely on mode switch — start from top
     const current = this.store.proseViewMode();
     this.store.setProseViewMode(current === 'flow' ? 'paged' : 'flow');
   }

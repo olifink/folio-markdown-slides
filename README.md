@@ -2,6 +2,8 @@
 
 > A local-first, offline-capable PWA for writing Markdown — as slides, or as paginated prose documents.
 
+A beautiful, simple and calm space for writing.
+
 Write Markdown, see it rendered in real time. No server, no account, no data leaving the device.
 
 Built with **Angular 21**, **Angular Material 3 (M3 Expressive)**, and a Signal-based architecture.
