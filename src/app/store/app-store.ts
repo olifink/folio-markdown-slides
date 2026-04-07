@@ -82,6 +82,7 @@ export class AppStore {
 
   readonly colorScheme = computed(() => this.prefs().darkMode);
   readonly editorWidth = signal(500);
+  readonly previewVisible = signal(true);
 
   constructor() {
     // Auto-save effect
@@ -208,6 +209,10 @@ export class AppStore {
 
   setTheme(theme: AppPrefs['preferredTheme']): void {
     this.updatePrefs({ preferredTheme: theme });
+  }
+
+  togglePreview(): void {
+    this.previewVisible.update(v => !v);
   }
 
   private updatePrefs(patch: Partial<AppPrefs>): void {

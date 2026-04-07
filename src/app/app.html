@@ -59,6 +59,14 @@
         </button>
       </mat-menu>
 
+      @if (isWide() && store.documentType() === 'prose') {
+        <button mat-icon-button (click)="store.togglePreview()" 
+          [matTooltip]="store.previewVisible() ? 'Hide Preview' : 'Show Preview'"
+          aria-label="Toggle preview visibility">
+          <mat-icon>{{ store.previewVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      }
+
       <button mat-icon-button (click)="onShowHelp()" aria-label="Show cheatsheet" matTooltip="Help">
         <mat-icon>help_outline</mat-icon>
       </button>
@@ -67,7 +75,8 @@
     @if (isWide()) {
       <div #splitPane class="split-pane" role="main" 
         [class.is-dragging]="isDragging()"
-        [style.grid-template-columns]="store.editorWidth() + 'px 1px 1fr'">
+        [class.preview-hidden]="!store.previewVisible() && store.documentType() === 'prose'"
+        [style.grid-template-columns]="(store.previewVisible() || store.documentType() === 'slides') ? (store.editorWidth() + 'px 1px 1fr') : '1fr'">
         
         <div class="split-pane__shield" [class.active]="isDragging()"></div>
 

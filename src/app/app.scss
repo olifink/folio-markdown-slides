@@ -131,6 +131,12 @@
     }
   }
 
+  &.preview-hidden {
+    .split-pane__divider, .split-pane__preview {
+      display: none;
+    }
+  }
+
   &__shield {
     position: absolute;
     inset: 0;
