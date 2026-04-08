@@ -48,19 +48,19 @@ html[data-color-scheme="dark"] {
   --color-plasma:     #7C4DFF;
   --color-neon-coral: #FF4D6D;
 
-  // Light-mode surfaces (default)
-  --surface:           #F8F8FC;
-  --surface-container: #EFEFF5;
+  // Light-mode surfaces: Post-it inspired light purple/lavender
+  --surface:           #FBF9FF;
+  --surface-container: #F3F0FF;
   --on-surface:        #18181F;
-  --outline:           #C8C8D8;
+  --outline:           #DFD9F2;
 
   // Typography
   --font-ui:     'Inter', system-ui, sans-serif;
   --font-editor: 'JetBrains Mono', 'Fira Code', monospace;
 
   // Editor — slide separator bar (light mode defaults)
-  --cm-separator-bg:    rgba(124, 77, 255, 0.1);
-  --cm-separator-color: #7C4DFF;
+  --cm-separator-bg:    rgba(255, 77, 109, 0.05);
+  --cm-separator-color: #FF4D6D;
 
   // Editor — syntax highlight colors (light mode defaults)
   --cm-color-heading:   #18181F;
