@@ -14,8 +14,8 @@ import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { AppStore } from '../store/app-store';
 import { EditorService } from '../services/editor.service';
-import { createMarpExtensions } from './marp-editor';
-import { CheatBarComponent } from './cheat-bar/cheat-bar';
+import { createFolioExtensions } from './folio-editor';
+import { CheatBarComponent, CheatItem } from './cheat-bar/cheat-bar';
 
 @Component({
   selector: 'app-editor-pane',
@@ -38,7 +38,7 @@ export class EditorPaneComponent {
 
   private editorView: EditorView | null = null;
 
-  private readonly extensions = createMarpExtensions(
+  private readonly extensions = createFolioExtensions(
     md => this.store.setMarkdown(md),
     idx => this.store.goToSlide(idx)
   );
@@ -54,8 +54,12 @@ export class EditorPaneComponent {
       });
     });
 
-    this.editorService.insert$.pipe(takeUntilDestroyed()).subscribe(text => {
-      this.doInsert(text);
+    this.editorService.insert$.pipe(takeUntilDestroyed()).subscribe(val => {
+      if (typeof val === 'string') {
+        this.doInsert(val);
+      } else {
+        this.onCheatInsert(val);
+      }
     });
 
     effect(() => {
@@ -76,8 +80,37 @@ export class EditorPaneComponent {
     this.destroyRef.onDestroy(() => this.editorView?.destroy());
   }
 
-  protected onCheatInsert(snippet: string): void {
-    this.doInsert(snippet);
+  protected onCheatInsert(item: CheatItem): void {
+    if (item.prefix !== undefined && item.suffix !== undefined) {
+      this.doWrap(item.prefix, item.suffix);
+    } else if (item.snippet !== undefined) {
+      this.doInsert(item.snippet);
+    }
+  }
+
+  private doWrap(prefix: string, suffix: string): void {
+    const view = this.editorView;
+    if (!view) return;
+
+    const { from, to } = view.state.selection.main;
+    const selectedText = view.state.doc.sliceString(from, to);
+    const insertion = prefix + selectedText + suffix;
+
+    view.dispatch({
+      changes: { from, to, insert: insertion },
+      selection: from === to
+        ? { anchor: from + prefix.length }
+        : { 
+            anchor: from + prefix.length, 
+            head: from + prefix.length + selectedText.length 
+          },
+      scrollIntoView: true,
+      userEvent: 'input.type',
+    });
+    
+    // Defer focus slightly to ensure the menu closing transition 
+    // doesn't steal focus back from the editor on mobile.
+    setTimeout(() => view.focus(), 0);
   }
 
   private doInsert(snippet: string): void {
@@ -95,8 +128,10 @@ export class EditorPaneComponent {
       view.dispatch({
         changes: { from, to, insert: snippet },
         selection: { anchor: from + snippet.length },
+        scrollIntoView: true,
+        userEvent: 'input.type',
       });
-      view.focus();
+      setTimeout(() => view.focus(), 0);
     }
   }
 
@@ -118,23 +153,28 @@ export class EditorPaneComponent {
         const newFmContent = fmContent.replace(keyRegex, `${key}: ${value}`);
         const newFullContent = content.replace(fmRegex, `---\n${newFmContent}\n---`);
         view.dispatch({
-          changes: { from: 0, to: content.length, insert: newFullContent }
+          changes: { from: 0, to: content.length, insert: newFullContent },
+          scrollIntoView: true
         });
       } else {
         // Key doesn't exist, append before the closing ---
         const closingPos = match[0].length;
         const insertPos = closingPos - 4; // index before \n---
         view.dispatch({
-          changes: { from: insertPos, to: insertPos, insert: `\n${key}: ${value}` }
+          changes: { from: insertPos, to: insertPos, insert: `\n${key}: ${value}` },
+          scrollIntoView: true
         });
       }
     } else {
       // Front matter doesn't exist, create it at the top
-      const newFm = `---\nmarp: true\n${key}: ${value}\n---\n\n`;
+      // If we're inserting a slide-specific key (like theme), add marp: true
+      const isMarpKey = ['theme', 'paginate', 'header', 'footer'].includes(key);
+      const newFm = `---\n${isMarpKey ? 'marp: true\n' : ''}${key}: ${value}\n---\n\n`;
       view.dispatch({
-        changes: { from: 0, to: 0, insert: newFm }
+        changes: { from: 0, to: 0, insert: newFm },
+        scrollIntoView: true
       });
     }
-    view.focus();
+    setTimeout(() => view.focus(), 0);
   }
 }

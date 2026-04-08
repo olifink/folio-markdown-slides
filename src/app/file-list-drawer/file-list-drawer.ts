@@ -3,7 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { AppStore } from '../store/app-store';
+import { AppStore, SAMPLE_MARKDOWN, SAMPLE_PROSE } from '../store/app-store';
 import { FsService } from '../services/fs.service';
 
 const COLOR_SCHEME_ICON: Record<string, string> = {
@@ -19,18 +19,18 @@ const COLOR_SCHEME_LABEL: Record<string, string> = {
 };
 
 @Component({
-  selector: 'app-presentation-list-drawer',
+  selector: 'app-file-list-drawer',
   imports: [
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
     MatSnackBarModule,
   ],
-  templateUrl: './presentation-list-drawer.html',
-  styleUrl: './presentation-list-drawer.scss',
+  templateUrl: './file-list-drawer.html',
+  styleUrl: './file-list-drawer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PresentationListDrawerComponent {
+export class FileListDrawerComponent {
   protected readonly store = inject(AppStore);
   protected readonly fs = inject(FsService);
   private readonly snackBar = inject(MatSnackBar);
@@ -44,7 +44,11 @@ export class PresentationListDrawerComponent {
   );
 
   async onNewPresentation(): Promise<void> {
-    await this.store.createFile('Untitled.md');
+    await this.store.createFile('Untitled Slides.md', SAMPLE_MARKDOWN);
+  }
+
+  async onNewProse(): Promise<void> {
+    await this.store.createFile('Untitled Document.md', SAMPLE_PROSE);
   }
 
   async onFileClick(file: string): Promise<void> {

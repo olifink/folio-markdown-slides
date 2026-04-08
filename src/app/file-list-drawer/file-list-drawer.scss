@@ -17,6 +17,12 @@
     display: flex;
     gap: 4px;
   }
+
+  .create-actions {
+    display: flex;
+    gap: 4px;
+    color: var(--primary);
+  }
 }
 
 .presentation-list {
@@ -140,6 +146,13 @@
 
   p {
     margin: 0;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
   }
 }
 

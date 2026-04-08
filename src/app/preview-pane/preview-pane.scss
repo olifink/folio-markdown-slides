@@ -28,23 +28,29 @@
   height: 100%;
   border: none;
   display: block;
+
+  &.reloading {
+    visibility: hidden;
+  }
 }
 
 // ── Slide navigation bar ──────────────────────────────────────────────────────
 
-.slide-nav {
+.slide-nav,
+.prose-info {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  padding: 0.25rem 0;
+  padding: 0.25rem 0.75rem;
   padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
   flex-shrink: 0;
   background: var(--surface-container);
   border-top: 1px solid var(--outline);
 }
 
-.slide-counter {
+.slide-counter,
+.page-counter {
   font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
   color: var(--on-surface);
@@ -53,13 +59,35 @@
   user-select: none;
 }
 
-// ── Present FAB ───────────────────────────────────────────────────────────────
+.prose-info {
+  button {
+    color: var(--on-surface-variant);
+  }
+}
 
-.present-fab {
+// ── Present / Toggle FABs ──────────────────────────────────────────────────
+
+.present-fab,
+.prose-toggle-fab {
   position: absolute;
   bottom: 3.5rem; // sits just above the nav bar
-  right: 1rem;
-  --mdc-fab-container-color: var(--color-volt);
-  --mdc-fab-icon-color: #18181F;
-  --mat-fab-foreground-color: #18181F;
+  right: 2rem;
+}
+
+.present-fab {
+  background-color: var(--color-volt) !important;
+  color: #18181F !important;
+
+  mat-icon {
+    color: #18181F !important;
+  }
+}
+
+.prose-toggle-fab {
+  background-color: var(--color-volt) !important;
+  color: #18181F !important;
+
+  mat-icon {
+    color: #18181F !important;
+  }
 }

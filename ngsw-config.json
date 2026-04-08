@@ -23,6 +23,7 @@
         "files": [
           "/assets/**",
           "/icons/**",
+          "/js/*.js",
           "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|apple-touch-icon|sharp-icon|ico|cur|ani)"
         ]
       }

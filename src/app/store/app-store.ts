@@ -6,7 +6,7 @@ export type ColorScheme = 'system' | 'light' | 'dark';
 
 const COLOR_SCHEME_CYCLE: ColorScheme[] = ['system', 'light', 'dark'];
 
-const SAMPLE_MARKDOWN = `---
+export const SAMPLE_MARKDOWN = `---
 marp: true
 ---
 
@@ -38,16 +38,40 @@ Folio supports three built-in Marp themes:
 Hit the **▶ Present** button to go full-screen.
 `;
 
+export const SAMPLE_PROSE = `# My First Document
+
+Write your content here. Use standard Markdown — headings, lists, **bold**, *italic*, footnotes[^1], tables, and code blocks all work.
+
+---
+
+## Page Two
+
+Use \`---\` to start a new page. It works the same way as in slide mode.
+
+[^1]: Footnotes render at the bottom of the page they appear on.
+`;
+
 @Injectable({ providedIn: 'root' })
 export class AppStore {
   private readonly fs = inject(FsService);
   private readonly prefsService = inject(PrefsService);
 
-  readonly presentationList = signal<string[]>([]);
+  readonly fileList = signal<string[]>([]);
   readonly currentFile = signal<string | null>(null);
   readonly currentMarkdown = signal('');
   readonly currentSlideIndex = signal(0);
   readonly slideCount = signal(1);
+  readonly proseViewMode = signal<'flow' | 'paged'>('flow');
+
+  readonly documentType = computed<'slides' | 'prose'>(() => {
+    const md = this.currentMarkdown();
+    const frontmatterMatch = md.trimStart().match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (frontmatterMatch && /^marp:\s*true\s*$/m.test(frontmatterMatch[1])) {
+      return 'slides';
+    }
+    return 'prose';
+  });
+
   readonly isDirty = signal(false);
   readonly prefs = signal<AppPrefs>({
     lastOpenFile: null,
@@ -58,6 +82,7 @@ export class AppStore {
 
   readonly colorScheme = computed(() => this.prefs().darkMode);
   readonly editorWidth = signal(500);
+  readonly previewVisible = signal(true);
 
   constructor() {
     // Auto-save effect
@@ -77,18 +102,18 @@ export class AppStore {
     this.prefs.set(prefs);
     
     await this.refreshList();
-    const list = this.presentationList();
+    const list = this.fileList();
 
     if (prefs.lastOpenFile && list.includes(prefs.lastOpenFile)) {
       await this.openFile(prefs.lastOpenFile);
     } else if (list.length > 0) {
       await this.openFile(list[0]);
     } else {
-      await this.createFile('Welcome.md', SAMPLE_MARKDOWN);
+      await this.createFile('Welcome.md', SAMPLE_PROSE);
     }
   }
 
-  async createFile(filename: string, content: string = SAMPLE_MARKDOWN): Promise<void> {
+  async createFile(filename: string, content: string = SAMPLE_PROSE): Promise<void> {
     let finalName = filename;
     if (!finalName.endsWith('.md')) finalName += '.md';
     
@@ -117,7 +142,7 @@ export class AppStore {
     await this.refreshList();
     
     if (this.currentFile() === filename) {
-      const list = this.presentationList();
+      const list = this.fileList();
       if (list.length > 0) {
         await this.openFile(list[0]);
       } else {
@@ -148,8 +173,8 @@ export class AppStore {
   }
 
   private async refreshList(): Promise<void> {
-    const list = await this.fs.listPresentations();
-    this.presentationList.set(list);
+    const list = await this.fs.listFiles();
+    this.fileList.set(list);
   }
 
   setMarkdown(value: string): void {
@@ -161,6 +186,10 @@ export class AppStore {
     const minWidth = 200;
     const maxWidth = window.innerWidth - 200;
     this.editorWidth.set(Math.max(minWidth, Math.min(width, maxWidth)));
+  }
+
+  setProseViewMode(mode: 'flow' | 'paged'): void {
+    this.proseViewMode.set(mode);
   }
 
   setSlideCount(count: number): void {
@@ -180,6 +209,10 @@ export class AppStore {
 
   setTheme(theme: AppPrefs['preferredTheme']): void {
     this.updatePrefs({ preferredTheme: theme });
+  }
+
+  togglePreview(): void {
+    this.previewVisible.update(v => !v);
   }
 
   private updatePrefs(patch: Partial<AppPrefs>): void {

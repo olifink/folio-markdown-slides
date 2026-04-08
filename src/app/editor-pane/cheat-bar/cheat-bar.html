@@ -1,21 +1,23 @@
 <div class="cheat-bar" role="toolbar" aria-label="Markdown snippet shortcuts">
   @for (cat of categories; track cat.label) {
-    <button
-      mat-button
-      class="cheat-button"
-      [matMenuTriggerFor]="menu"
-      [attr.aria-label]="cat.label + ' snippets'"
-    >{{ cat.label }}</button>
+    @if (store.documentType() === 'slides' || (cat.label !== 'Slide' && cat.label !== 'Theme')) {
+      <button
+        mat-button
+        class="cheat-button"
+        [matMenuTriggerFor]="menu"
+        [attr.aria-label]="cat.label + ' snippets'"
+      >{{ cat.label }}</button>
 
-    <mat-menu #menu="matMenu" class="cheat-menu">
-      @for (item of cat.items; track item.label) {
-        <button mat-menu-item (click)="insert.emit(item.snippet)">
-          <span class="cheat-menu-item">
-            <span class="cheat-menu-item__label">{{ item.label }}</span>
-            <span class="cheat-menu-item__hint">{{ item.hint }}</span>
-          </span>
-        </button>
-      }
-    </mat-menu>
+      <mat-menu #menu="matMenu" class="cheat-menu">
+        @for (item of cat.items; track item.label) {
+          <button mat-menu-item (click)="insert.emit(item)">
+            <span class="cheat-menu-item">
+              <span class="cheat-menu-item__label">{{ item.label }}</span>
+              <span class="cheat-menu-item__hint">{{ item.hint }}</span>
+            </span>
+          </button>
+        }
+      </mat-menu>
+    }
   }
 </div>

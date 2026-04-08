@@ -93,6 +93,28 @@
   flex: 1;
 }
 
+.toolbar__prose-toggle {
+  height: 32px;
+  
+  mat-button-toggle {
+    font-size: 0.75rem;
+    
+    ::ng-deep .mat-button-toggle-label-content {
+      line-height: 30px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
 // ── Wide layout: split pane ──────────────────────────────────────────────────
 
 .split-pane {
@@ -106,6 +128,12 @@
 
     .split-pane__divider {
       background: var(--color-plasma);
+    }
+  }
+
+  &.preview-hidden {
+    .split-pane__divider, .split-pane__preview {
+      display: none;
     }
   }
 

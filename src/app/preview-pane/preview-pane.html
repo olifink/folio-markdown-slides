@@ -3,41 +3,63 @@
     <iframe
       #previewFrame
       class="slide-frame"
+      [class.reloading]="proseReloading()"
       title="Slide preview"
       (load)="onFrameLoad()"
     ></iframe>
   </div>
 
-  <nav class="slide-nav" aria-label="Slide navigation">
+  @if (store.documentType() === 'slides') {
+    <nav class="slide-nav" aria-label="Slide navigation">
+      <button
+        mat-icon-button
+        aria-label="Previous slide"
+        [disabled]="store.currentSlideIndex() === 0"
+        (click)="prevSlide()"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <span class="slide-counter" aria-live="polite" aria-atomic="true">
+        {{ store.currentSlideIndex() + 1 }}&thinsp;/&thinsp;{{ store.slideCount() }}
+      </span>
+
+      <button
+        mat-icon-button
+        aria-label="Next slide"
+        [disabled]="store.currentSlideIndex() === store.slideCount() - 1"
+        (click)="nextSlide()"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </nav>
+
     <button
-      mat-icon-button
-      aria-label="Previous slide"
-      [disabled]="store.currentSlideIndex() === 0"
-      (click)="prevSlide()"
+      mat-fab
+      class="present-fab"
+      aria-label="Present slides"
+      (click)="present()"
     >
-      <mat-icon>chevron_left</mat-icon>
+      <mat-icon>play_arrow</mat-icon>
     </button>
-
-    <span class="slide-counter" aria-live="polite" aria-atomic="true">
-      {{ store.currentSlideIndex() + 1 }}&thinsp;/&thinsp;{{ store.slideCount() }}
-    </span>
+  } @else {
+    <div class="prose-info">
+      @if (store.proseViewMode() === 'paged') {
+        <span class="page-counter">
+          VIEW: PAGED &middot; {{ store.slideCount() }} {{ store.slideCount() === 1 ? 'page' : 'pages' }}
+        </span>
+      } @else {
+        <span class="page-counter">VIEW: FLOW</span>
+      }
+    </div>
 
     <button
-      mat-icon-button
-      aria-label="Next slide"
-      [disabled]="store.currentSlideIndex() === store.slideCount() - 1"
-      (click)="nextSlide()"
+      mat-fab
+      class="prose-toggle-fab"
+      [attr.aria-label]="store.proseViewMode() === 'flow' ? 'Switch to paginated view' : 'Switch to flow view'"
+      (click)="toggleProseMode()"
     >
-      <mat-icon>chevron_right</mat-icon>
+      <mat-icon>{{ store.proseViewMode() === 'flow' ? 'import_contacts' : 'article' }}</mat-icon>
     </button>
-  </nav>
-
-  <button
-    mat-fab
-    class="present-fab"
-    aria-label="Present slides"
-    (click)="present()"
-  >
-    <mat-icon>play_arrow</mat-icon>
-  </button>
+  }
 </div>

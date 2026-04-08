@@ -1,11 +1,11 @@
 <mat-drawer-container class="app-container">
   <mat-drawer #drawer mode="over" class="file-drawer">
-    <app-presentation-list-drawer></app-presentation-list-drawer>
+    <app-file-list-drawer></app-file-list-drawer>
   </mat-drawer>
 
   <mat-drawer-content class="app-content">
     <mat-toolbar class="toolbar" role="banner">
-      <button mat-icon-button (click)="drawer.toggle()" aria-label="Open presentation list">
+      <button mat-icon-button (click)="drawer.toggle()" aria-label="Open file list">
         <mat-icon>menu</mat-icon>
       </button>
       <span class="toolbar__brand">Folio</span>
@@ -20,17 +20,17 @@
             (input)="editValue.set(titleInput.value)"
             (blur)="finishRename()"
             (keydown)="onTitleKeydown($event)"
-            aria-label="Rename presentation"
+            aria-label="Rename document"
           >
         } @else {
           <button 
             mat-button 
             class="toolbar__file-chip" 
             (click)="onTitleClick()" 
-            aria-label="Rename presentation"
-            matTooltip="Rename presentation"
+            aria-label="Rename document"
+            matTooltip="Rename document"
           >
-            {{ store.currentFile()?.replace('.md', '') || 'New Presentation' }}
+            {{ store.currentFile()?.replace('.md', '') || (store.documentType() === 'slides' ? 'New Presentation' : 'New Document') }}
           </button>
         }
       </div>
@@ -41,7 +41,7 @@
 
       <span class="toolbar__spacer"></span>
 
-      <button mat-icon-button [matMenuTriggerFor]="exportMenu" aria-label="Export presentation" matTooltip="Export">
+      <button mat-icon-button [matMenuTriggerFor]="exportMenu" aria-label="Export document" matTooltip="Export">
         <mat-icon>download</mat-icon>
       </button>
       <mat-menu #exportMenu="matMenu" xPosition="before">
@@ -59,6 +59,14 @@
         </button>
       </mat-menu>
 
+      @if (isWide() && store.documentType() === 'prose') {
+        <button mat-icon-button (click)="store.togglePreview()" 
+          [matTooltip]="store.previewVisible() ? 'Hide Preview' : 'Show Preview'"
+          aria-label="Toggle preview visibility">
+          <mat-icon>{{ store.previewVisible() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      }
+
       <button mat-icon-button (click)="onShowHelp()" aria-label="Show cheatsheet" matTooltip="Help">
         <mat-icon>help_outline</mat-icon>
       </button>
@@ -67,7 +75,8 @@
     @if (isWide()) {
       <div #splitPane class="split-pane" role="main" 
         [class.is-dragging]="isDragging()"
-        [style.grid-template-columns]="store.editorWidth() + 'px 1px 1fr'">
+        [class.preview-hidden]="!store.previewVisible() && store.documentType() === 'prose'"
+        [style.grid-template-columns]="(store.previewVisible() || store.documentType() === 'slides') ? (store.editorWidth() + 'px 1px 1fr') : '1fr'">
         
         <div class="split-pane__shield" [class.active]="isDragging()"></div>
 

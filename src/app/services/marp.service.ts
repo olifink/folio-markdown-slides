@@ -1,24 +1,18 @@
 import { Injectable } from '@angular/core';
 import Marp from '@marp-team/marp-core';
-// @ts-ignore
-import mark from 'markdown-it-mark';
-// @ts-ignore
-import footnote from 'markdown-it-footnote';
-// @ts-ignore
-import deflist from 'markdown-it-deflist';
-// @ts-ignore
-import container from 'markdown-it-container';
+import { configureMarkdownPlugins } from './configure-markdown';
+import { loadMermaidScript } from './mermaid-loader';
 
 const MARPX_THEMES = [
-  'cantor', 'church', 'copernicus', 'einstein', 
-  'frankfurt', 'galileo', 'gauss', 'gropius', 
-  'gödel', 'haskell', 'hobbes', 'lorca', 
+  'cantor', 'church', 'copernicus', 'einstein',
+  'frankfurt', 'galileo', 'gauss', 'gropius',
+  'gödel', 'haskell', 'hobbes', 'lorca',
   'marpx', 'newton', 'socrates', 'sparta'
 ];
 
 @Injectable({ providedIn: 'root' })
 export class MarpService {
-  private readonly marp = new Marp({ 
+  private readonly marp = new Marp({
     html: true,
     math: 'katex',
     emoji: {
@@ -27,24 +21,12 @@ export class MarpService {
     }
   });
 
+  private mermaidContent = '';
+
   constructor() {
-    this.marp.markdown
-      .use(mark)
-      .use(footnote)
-      .use(deflist)
-      .use(container, 'container');
-
-    // Add Mermaid support to markdown-it
-    const defaultFence = this.marp.markdown.renderer.rules.fence;
-    this.marp.markdown.renderer.rules.fence = (tokens: any[], idx: number, options: any, env: any, self: any) => {
-      const token = tokens[idx];
-      if (token.info === 'mermaid') {
-        return `<div class="mermaid-container"><pre class="mermaid">${token.content}</pre></div>`;
-      }
-      return defaultFence!(tokens, idx, options, env, self);
-    };
-
+    configureMarkdownPlugins(this.marp.markdown);
     this.registerMarpXThemes();
+    loadMermaidScript().then(s => (this.mermaidContent = s));
   }
 
   private async registerMarpXThemes(): Promise<void> {
@@ -67,9 +49,49 @@ export class MarpService {
     return { html, css, slideCount };
   }
 
-  buildSrcdoc(html: string, css: string, isExport: boolean = false): string {
-    const navScript = isExport ? '' : `
-<script src="js/mermaid.min.js"></script>
+  /**
+   * @param standalone - true for HTML file download (inlines mermaid script);
+   *                     false for live preview and print-to-PDF (uses <script src>).
+   */
+  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, standalone: boolean = false): string {
+    const mermaidTag = standalone && this.mermaidContent
+      ? `<script>${this.mermaidContent}</script>`
+      : `<script src="js/mermaid.min.js"></script>`;
+
+    // Mermaid initialisation — always included (preview + export).
+    // Export renders all diagrams at once; preview renders per active slide.
+    const mermaidInit = isExport ? `
+${mermaidTag}
+<script>
+(function () {
+  var MERMAID_CONFIG = {
+    startOnLoad: false,
+    theme: 'default',
+    securityLevel: 'loose',
+    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontSize: 20,
+    flowchart: { useMaxWidth: false, htmlLabels: true },
+    sequence: { useMaxWidth: false },
+    gantt: { useMaxWidth: false }
+  };
+  function init() {
+    if (!window.mermaid) {
+      window.parent.postMessage({ type: 'printReady' }, '*');
+      return;
+    }
+    mermaid.initialize(MERMAID_CONFIG);
+    mermaid.run({ querySelector: '.mermaid' }).then(function() {
+      window.parent.postMessage({ type: 'printReady' }, '*');
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>` : `
+${mermaidTag}
 <script>
 (function () {
   var slides = document.querySelectorAll('svg[data-marpit-svg]');
@@ -92,7 +114,7 @@ export class MarpService {
     var clamped = Math.max(0, Math.min(idx, slides.length - 1));
     slides.forEach(function (s, i) { s.classList.toggle('active', i === clamped); });
     current = clamped;
-    
+
     if (window.mermaid) {
       await document.fonts.ready;
       var diagramEls = Array.from(document.querySelectorAll('.active .mermaid:not([data-processed])'));
@@ -136,7 +158,7 @@ export class MarpService {
     if (touchEndX < touchStartX - 50) next = current + 1;
     else if (touchEndX > touchStartX + 50) next = current - 1;
     else return;
-    show(next).then(function(idx) { window.parent.postMessage({ slideIndex: actualIdx }, '*'); });
+    show(next).then(function(idx) { window.parent.postMessage({ slideIndex: idx }, '*'); });
   }, false);
 
   window.addEventListener('message', function (e) {
@@ -153,7 +175,7 @@ export class MarpService {
   .marpit { display: flex; align-items: center; justify-content: center; }
   svg[data-marpit-svg] { display: none; flex-shrink: 0; }
   svg[data-marpit-svg].active { display: block; max-width: 100%; max-height: 100%; }
-  
+
   .mermaid-container {
     display: flex;
     justify-content: center;
@@ -164,6 +186,11 @@ export class MarpService {
     max-width: 100%;
     height: auto;
   }
+`;
+
+    const taskListStyles = `
+  .task-list-item { list-style-type: none !important; }
+  .task-list-item-checkbox { margin: 0 0.5em 0.25em -1.4em !important; vertical-align: middle !important; }
 `;
 
     return `<!DOCTYPE html>
@@ -179,11 +206,12 @@ export class MarpService {
     ${isExport ? '' : 'touch-action: none;'}
   }
   ${interactiveStyles}
+  ${taskListStyles}
 </style>
 </head>
 <body>
 ${html}
-${navScript}
+${mermaidInit}
 </body>
 </html>`;
   }

@@ -32,8 +32,10 @@
     "@marp-team/marp-core": "^4.3.0",
     "markdown-it-container": "^4.0.0",
     "markdown-it-deflist": "^3.0.0",
+    "markdown-it-emoji": "^3.0.0",
     "markdown-it-footnote": "^4.0.0",
     "markdown-it-mark": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1",
     "mermaid": "^11.14.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"

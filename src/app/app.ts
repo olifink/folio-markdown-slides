@@ -12,9 +12,10 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { EditorPaneComponent } from './editor-pane/editor-pane';
 import { PreviewPaneComponent } from './preview-pane/preview-pane';
-import { PresentationListDrawerComponent } from './presentation-list-drawer/presentation-list-drawer';
+import { FileListDrawerComponent } from './file-list-drawer/file-list-drawer';
 import { HelpDialogComponent } from './help-dialog/help-dialog';
 import { AppStore } from './store/app-store';
 import { ExportService } from './services/export.service';
@@ -43,10 +44,11 @@ const COLOR_SCHEME_LABEL: Record<string, string> = {
     MatSnackBarModule,
     MatMenuModule,
     MatDialogModule,
+    MatButtonToggleModule,
     CdkDrag,
     EditorPaneComponent,
     PreviewPaneComponent,
-    PresentationListDrawerComponent,
+    FileListDrawerComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
