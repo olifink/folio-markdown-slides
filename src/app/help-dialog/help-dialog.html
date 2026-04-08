@@ -15,10 +15,10 @@
             <div class="item">
               <div class="item-header">
                 <span class="item-label">{{ item.label }}</span>
-                <span class="item-description">{{ item.description }}</span>
+                <span class="item-description">{{ item.hint }}</span>
               </div>
-              <button class="snippet-button" (click)="insert(item.snippet)" matTooltip="Insert into editor">
-                <code>{{ item.snippet }}</code>
+              <button class="snippet-button" (click)="insert(item)" matTooltip="Insert into editor">
+                <code>{{ item.snippet || (item.prefix + '...' + item.suffix) }}</code>
               </button>
             </div>
           }
