@@ -73,6 +73,24 @@ export class ProseService {
       flowchart: { useMaxWidth: false, htmlLabels: true }
     }`;
 
+    // Helper script to handle internal hash links (footnotes) within srcdoc.
+    // Prevents the browser from trying to navigate the parent URL.
+    const hashLinkScript = `
+<script>
+document.addEventListener('click', function(e) {
+  var target = e.target;
+  while (target && target.tagName !== 'A') target = target.parentNode;
+  if (target && target.getAttribute('href') && target.getAttribute('href').startsWith('#')) {
+    var id = target.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView();
+    }
+  }
+});
+</script>`;
+
     let pagedScript = '';
     if (isPaged && !isExport) {
       pagedScript = `${mermaidTag}
@@ -91,7 +109,8 @@ window.PagedConfig = {
 window.addEventListener('DOMContentLoaded', function() {
   window.PagedPolyfill.preview();
 });
-</script>`;
+</script>
+${hashLinkScript}`;
     } else if (isExport) {
       // Export (HTML download or print): no paged.js, but mermaid still renders
       pagedScript = `${mermaidTag}
@@ -106,7 +125,8 @@ window.addEventListener('DOMContentLoaded', function() {
     window.parent.postMessage({ type: 'printReady' }, '*');
   }
 });
-</script>`;
+</script>
+${hashLinkScript}`;
     } else {
       // Flow mode preview
       pagedScript = `${mermaidTag}
@@ -117,7 +137,8 @@ window.addEventListener('DOMContentLoaded', function() {
     mermaid.run({ querySelector: '.mermaid' });
   }
 });
-</script>`;
+</script>
+${hashLinkScript}`;
     }
 
     const pagedStyles = isPaged ? `

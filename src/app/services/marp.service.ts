@@ -58,6 +58,24 @@ export class MarpService {
       ? `<script>${this.mermaidContent}</script>`
       : `<script src="js/mermaid.min.js"></script>`;
 
+    // Helper script to handle internal hash links (footnotes) within srcdoc.
+    // Prevents the browser from trying to navigate the parent URL.
+    const hashLinkScript = `
+<script>
+document.addEventListener('click', function(e) {
+  var target = e.target;
+  while (target && target.tagName !== 'A') target = target.parentNode;
+  if (target && target.getAttribute('href') && target.getAttribute('href').startsWith('#')) {
+    var id = target.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView();
+    }
+  }
+});
+</script>`;
+
     // Mermaid initialisation — always included (preview + export).
     // Export renders all diagrams at once; preview renders per active slide.
     const mermaidInit = isExport ? `
@@ -90,7 +108,8 @@ ${mermaidTag}
     init();
   }
 })();
-</script>` : `
+</script>
+${hashLinkScript}` : `
 ${mermaidTag}
 <script>
 (function () {
@@ -165,7 +184,8 @@ ${mermaidTag}
     if (e.data && typeof e.data.slideIndex === 'number') show(e.data.slideIndex);
   });
 })();
-</script>`;
+</script>
+${hashLinkScript}`;
 
     const interactiveStyles = isExport ? `
   html, body { height: auto !important; overflow: visible !important; }
