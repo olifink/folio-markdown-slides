@@ -64,8 +64,6 @@ export class PreviewPaneComponent {
   );
 
   constructor() {
-    // ... (rest of constructor)
-    
     // Update iframe srcdoc and store slide/page count whenever rendered output changes
     effect(() => {
       const result = this.rendered();
@@ -79,10 +77,14 @@ export class PreviewPaneComponent {
         iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false);
       } else {
         // Save scroll position before the srcdoc replacement resets it to 0.
-        // Hide the iframe in flow mode so the scroll-jump isn't visible.
+        const win = iframe.nativeElement.contentWindow;
         const scrollEl = iframe.nativeElement.contentDocument?.documentElement;
-        this.proseScrollY = scrollEl?.scrollTop ?? 0;
-        if (proseMode === 'flow') this.proseReloading.set(true);
+        const bodyEl = iframe.nativeElement.contentDocument?.body;
+        this.proseScrollY = win?.pageYOffset ?? win?.scrollY ?? scrollEl?.scrollTop ?? bodyEl?.scrollTop ?? 0;
+
+        // Hide the iframe so the scroll-jump/reflow isn't visible.
+        this.proseReloading.set(true);
+        
         // Page count is set via postMessage after Paged.js finishes
         iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme);
       }
@@ -103,16 +105,26 @@ export class PreviewPaneComponent {
     });
 
     // Receive messages from the preview iframe.
-    // pageCount: emitted by Paged.js after layout completes — update page counter and
-    //            restore scroll position (paged mode reflows asynchronously, so we can't
-    //            do this in onFrameLoad).
     fromEvent<MessageEvent>(window, 'message')
       .pipe(takeUntilDestroyed())
       .subscribe(e => {
+        const iframe = this.iframeRef()?.nativeElement;
+        if (e.source !== iframe?.contentWindow) return;
+
         if (e.data?.pageCount !== undefined) {
           this.store.setSlideCount(e.data.pageCount);
           if (this.store.proseViewMode() === 'paged') {
-            this.iframeRef()?.nativeElement.contentWindow?.scrollTo({ top: this.proseScrollY, behavior: 'instant' });
+            const targetY = this.proseScrollY;
+            const win = iframe?.contentWindow;
+            
+            const restore = () => {
+              win?.scrollTo({ top: targetY, behavior: 'instant' });
+              this.proseReloading.set(false);
+            };
+
+            // Double-hit restoration to ensure it sticks after layout/paint
+            restore();
+            requestAnimationFrame(restore);
           }
         }
       });

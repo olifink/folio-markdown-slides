@@ -157,7 +157,7 @@ document.addEventListener('click', function(e) {
     if (isPaged && !isExport) {
       pagedScript = `
 <script>
-window.PagedConfig = {
+    window.PagedConfig = {
   auto: false,
   after: function(flow) {
     if (window.rescalePagedView) window.rescalePagedView();
@@ -165,8 +165,12 @@ window.PagedConfig = {
       mermaid.initialize(${mermaidConfig(false)});
       mermaid.run({ querySelector: '.mermaid' });
     }
-    // Post message AFTER scaling so parent scroll restoration is accurate
-    window.parent.postMessage({ pageCount: flow.total }, '*');
+    // Post message AFTER scaling so parent scroll restoration is accurate.
+    // We use requestAnimationFrame to ensure the body height change has been processed.
+    var total = (flow && typeof flow.total === 'number') ? flow.total : 1;
+    requestAnimationFrame(function() {
+      window.parent.postMessage({ pageCount: total }, '*');
+    });
   }
 };
 </script>
