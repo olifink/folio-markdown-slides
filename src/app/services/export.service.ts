@@ -40,7 +40,7 @@ export class ExportService {
       fullHtml = this.marpService.buildSrcdoc(html, css, true);
     } else {
       const { html } = this.proseService.render(markdown);
-      fullHtml = this.proseService.buildSrcdoc(html, true, 'paged');
+      fullHtml = this.proseService.buildSrcdoc(html, true, this.store.proseViewMode());
     }
     
     const printFrame = document.createElement('iframe');
