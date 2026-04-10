@@ -12,7 +12,7 @@ marp: true
 
 # Hello, Folio
 
-A local-first Markdown slide editor.
+Folio is a local-first Markdown text and slide editor.
 
 ---
 
@@ -28,8 +28,9 @@ Separate each slide with \`---\` and write Markdown.
 
 ## Themes
 
-Folio supports three built-in Marp themes:
-\`default\`, \`gaia\`, and \`uncover\`.
+Folio Slides supports three built-in Marp themes:
+\`default\`, \`gaia\`, and \`uncover\` as well as all 
+[MarpX themes](https://github.com/cunhapaulo/MarpX).
 
 ---
 
@@ -38,7 +39,11 @@ Folio supports three built-in Marp themes:
 Hit the **▶ Present** button to go full-screen.
 `;
 
-export const SAMPLE_PROSE = `# My First Document
+export const SAMPLE_PROSE = `# Hello, Folio
+
+Folio is a local-first Markdown text and slide editor.
+
+## My First Document
 
 Write your content here. Use standard Markdown — headings, lists, **bold**, *italic*, footnotes[^1], tables, and code blocks all work.
 
@@ -48,7 +53,7 @@ Write your content here. Use standard Markdown — headings, lists, **bold**, *i
 
 Use \`---\` to start a new page. It works the same way as in slide mode.
 
-[^1]: Footnotes render at the bottom of the page they appear on.
+[^1]: Footnotes render at the bottom of the page.
 `;
 
 @Injectable({ providedIn: 'root' })
@@ -66,7 +71,7 @@ export class AppStore {
   readonly documentType = computed<'slides' | 'prose'>(() => {
     const file = this.currentFile();
     if (file?.endsWith('.slides.md')) return 'slides';
-    
+
     // Fallback to content detection for older files or manual renaming
     const md = this.currentMarkdown();
     const frontmatterMatch = md.trimStart().match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -104,7 +109,7 @@ export class AppStore {
     await this.fs.init();
     const prefs = await this.prefsService.init();
     this.prefs.set(prefs);
-    
+
     await this.refreshList();
     const list = this.fileList();
 
@@ -120,7 +125,7 @@ export class AppStore {
   async createFile(filename: string, content: string = SAMPLE_PROSE, isSlides: boolean = false): Promise<void> {
     let finalName = filename;
     const suffix = isSlides ? '.slides.md' : '.md';
-    
+
     // Ensure the correct extension based on isSlides
     if (isSlides) {
       if (!finalName.endsWith('.slides.md')) {
@@ -133,7 +138,7 @@ export class AppStore {
         finalName += '.md';
       }
     }
-    
+
     // Simple collision avoidance
     let counter = 1;
     const baseName = finalName.slice(0, -suffix.length);
@@ -157,7 +162,7 @@ export class AppStore {
   async deleteFile(filename: string): Promise<void> {
     await this.fs.deleteFile(filename);
     await this.refreshList();
-    
+
     if (this.currentFile() === filename) {
       const list = this.fileList();
       if (list.length > 0) {
@@ -173,7 +178,7 @@ export class AppStore {
   async renameFile(oldName: string, newName: string): Promise<void> {
     let finalNewName = newName;
     if (!finalNewName.endsWith('.md')) finalNewName += '.md';
-    
+
     if (oldName === finalNewName) return;
 
     if (await this.fs.exists(finalNewName)) {
@@ -182,7 +187,7 @@ export class AppStore {
 
     await this.fs.renameFile(oldName, finalNewName);
     await this.refreshList();
-    
+
     if (this.currentFile() === oldName) {
       this.currentFile.set(finalNewName);
       this.updatePrefs({ lastOpenFile: finalNewName });

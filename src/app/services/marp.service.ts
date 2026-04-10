@@ -58,20 +58,27 @@ export class MarpService {
       ? `<script>${this.mermaidContent}</script>`
       : `<script src="js/mermaid.min.js"></script>`;
 
-    // Helper script to handle internal hash links (footnotes) within srcdoc.
-    // Prevents the browser from trying to navigate the parent URL.
-    const hashLinkScript = `
+    // Helper script to handle links within srcdoc.
+    // 1. Internal hash links (footnotes) scroll into view.
+    // 2. External links open in a new tab to avoid iframe navigation issues.
+    const linkHandlerScript = `
 <script>
 document.addEventListener('click', function(e) {
   var target = e.target;
   while (target && target.tagName !== 'A') target = target.parentNode;
-  if (target && target.getAttribute('href') && target.getAttribute('href').startsWith('#')) {
-    var id = target.getAttribute('href').slice(1);
+  if (!target || !target.getAttribute('href')) return;
+
+  var href = target.getAttribute('href');
+  if (href.startsWith('#')) {
+    var id = href.slice(1);
     var el = document.getElementById(id);
     if (el) {
       e.preventDefault();
       el.scrollIntoView();
     }
+  } else {
+    e.preventDefault();
+    window.open(href, '_blank');
   }
 });
 </script>`;
@@ -109,7 +116,7 @@ ${mermaidTag}
   }
 })();
 </script>
-${hashLinkScript}` : `
+${linkHandlerScript}` : `
 ${mermaidTag}
 <script>
 (function () {
@@ -185,7 +192,7 @@ ${mermaidTag}
   });
 })();
 </script>
-${hashLinkScript}`;
+${linkHandlerScript}`;
 
     const interactiveStyles = isExport ? `
   html, body { height: auto !important; overflow: visible !important; }

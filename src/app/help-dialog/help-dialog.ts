@@ -75,6 +75,7 @@ export class HelpDialogComponent {
 
   protected insert(item: CheatItem): void {
     this.editorService.insert(item);
+    this.close();
   }
 
   protected close(): void {
