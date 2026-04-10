@@ -52,20 +52,29 @@ export class ExportService {
     printFrame.style.border = '0';
     document.body.appendChild(printFrame);
 
-    printFrame.srcdoc = fullHtml;
-    window.addEventListener('message', function onPrintReady(e) {
+    let hasPrinted = false;
+    const doPrint = () => {
+      if (hasPrinted) return;
+      hasPrinted = true;
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+        window.removeEventListener('message', onPrintReady);
+      }, 1000);
+    };
+
+    const onPrintReady = (e: MessageEvent) => {
       if (e.source !== printFrame.contentWindow || e.data?.type !== 'printReady') return;
-      window.removeEventListener('message', onPrintReady);
-      printFrame.contentWindow?.focus();
-      printFrame.contentWindow?.print();
-      setTimeout(() => document.body.removeChild(printFrame), 1000);
-    });
+      doPrint();
+    };
+
+    window.addEventListener('message', onPrintReady);
+
+    printFrame.srcdoc = fullHtml;
+    
     // Fallback: if mermaid isn't present or signals are never sent, print after a delay
-    printFrame.onload = () => setTimeout(() => {
-      printFrame.contentWindow?.focus();
-      printFrame.contentWindow?.print();
-      setTimeout(() => document.body.removeChild(printFrame), 1000);
-    }, 1500);
+    printFrame.onload = () => setTimeout(doPrint, 1500);
   }
 
   private download(filename: string, blob: Blob): void {
