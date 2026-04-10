@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AppStore, SAMPLE_MARKDOWN, SAMPLE_PROSE } from '../store/app-store';
 import { FsService } from '../services/fs.service';
+import JSZip from 'jszip';
 
 const COLOR_SCHEME_ICON: Record<string, string> = {
   system: 'brightness_auto',
@@ -51,6 +52,30 @@ export class FileListDrawerComponent {
 
   async onNewProse(): Promise<void> {
     await this.store.createFile('Untitled Document.md', SAMPLE_PROSE, false);
+  }
+
+  async onDownloadAll(): Promise<void> {
+    const files = this.store.fileList();
+    if (files.length === 0) {
+      this.snackBar.open('No files to export', 'Dismiss', { duration: 2000 });
+      return;
+    }
+
+    const zip = new JSZip();
+    for (const file of files) {
+      const content = await this.fs.readFile(file);
+      zip.file(file, content);
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `folio-export-${new Date().toISOString().split('T')[0]}.zip`;
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    this.snackBar.open(`Exported ${files.length} files to ZIP`, 'Dismiss', { duration: 3000 });
   }
 
   async onFileClick(file: string): Promise<void> {

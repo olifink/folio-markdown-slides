@@ -215,14 +215,25 @@ function marpCompletionSource(context: CompletionContext): CompletionResult | nu
   // 7. General Markdown snippets (triggered by characters OR explicit Ctrl+Space)
   const snippetPrefix = context.matchBefore(/[#!$*=\^:`-]*/);
   if (context.explicit || (snippetPrefix && snippetPrefix.from !== snippetPrefix.to)) {
-    return {
-      from: snippetPrefix ? snippetPrefix.from : context.pos,
-      options: SNIPPETS.map(s => ({
+    const isSlides = isInFrontMatter || fullText.includes('marp: true');
+    const options = SNIPPETS.filter(s => {
+      if (!isSlides && s.apply.includes('bg')) return false;
+      return true;
+    }).map(s => {
+      if (!isSlides && s.label === '![bg] Background') {
+        return { ...s, label: '![alt] Image', apply: '![alt](url)', detail: 'Standard image' };
+      }
+      return {
         label: s.label,
         type: 'text',
         apply: s.apply,
         detail: s.detail
-      })),
+      };
+    });
+
+    return {
+      from: snippetPrefix ? snippetPrefix.from : context.pos,
+      options: options,
       filter: true
     };
   }

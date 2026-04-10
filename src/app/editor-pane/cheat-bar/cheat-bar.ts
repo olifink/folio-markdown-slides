@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, computed } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { AppStore } from '../../store/app-store';
@@ -42,6 +42,10 @@ const CATEGORIES: readonly CheatCategory[] = [
     ],
   },
   {
+    label: 'Image',
+    items: [], // Populated dynamically
+  },
+  {
     label: 'Slide',
     items: [
       { label: 'New slide',     hint: '---',                      snippet: '\n---\n' },
@@ -57,15 +61,6 @@ const CATEGORIES: readonly CheatCategory[] = [
       { label: 'Uncover',           hint: 'theme: uncover',         snippet: 'theme: uncover' },
       { label: 'Background colour', hint: 'backgroundColor: #fff',  snippet: 'backgroundColor: #ffffff' },
       { label: 'Text colour',       hint: 'color: #000',            snippet: 'color: #000000' },
-    ],
-  },
-  {
-    label: 'Image',
-    items: [
-      { label: 'Background full',    hint: '![bg](url)',           snippet: '![bg](url)' },
-      { label: 'Background left',    hint: '![bg left](url)',      snippet: '![bg left](url)' },
-      { label: 'Background right',   hint: '![bg right](url)',     snippet: '![bg right](url)' },
-      { label: 'Bg 50% left',        hint: '![bg left:50%](url)', snippet: '![bg left:50%](url)' },
     ],
   },
   {
@@ -85,6 +80,19 @@ const CATEGORIES: readonly CheatCategory[] = [
   },
 ];
 
+const IMAGE_ITEMS_PROSE: readonly CheatItem[] = [
+  { label: 'Standard Image',    hint: '![alt](url)',          snippet: '![alt](url)' },
+  { label: 'Image with Title',  hint: '![alt](url "title")', snippet: '![alt](url "title")' },
+];
+
+const IMAGE_ITEMS_SLIDES: readonly CheatItem[] = [
+  { label: 'Standard Image',    hint: '![alt](url)',          snippet: '![alt](url)' },
+  { label: 'Background full',    hint: '![bg](url)',           snippet: '![bg](url)' },
+  { label: 'Background left',    hint: '![bg left](url)',      snippet: '![bg left](url)' },
+  { label: 'Background right',   hint: '![bg right](url)',     snippet: '![bg right](url)' },
+  { label: 'Bg 50% left',        hint: '![bg left:50%](url)', snippet: '![bg left:50%](url)' },
+];
+
 @Component({
   selector: 'app-cheat-bar',
   imports: [MatButtonModule, MatMenuModule],
@@ -95,5 +103,22 @@ const CATEGORIES: readonly CheatCategory[] = [
 export class CheatBarComponent {
   protected readonly store = inject(AppStore);
   readonly insert = output<CheatItem>();
-  protected readonly categories = CATEGORIES;
+  
+  protected readonly categories = computed(() => {
+    const type = this.store.documentType();
+    return CATEGORIES.filter(cat => {
+      if (type === 'prose') {
+        return !['Slide', 'Theme', 'Layout'].includes(cat.label);
+      }
+      return true;
+    }).map(cat => {
+      if (cat.label === 'Image') {
+        return {
+          ...cat,
+          items: type === 'prose' ? IMAGE_ITEMS_PROSE : IMAGE_ITEMS_SLIDES
+        };
+      }
+      return cat;
+    });
+  });
 }

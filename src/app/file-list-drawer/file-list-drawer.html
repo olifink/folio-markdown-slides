@@ -9,6 +9,10 @@
       <mat-icon>{{ colorSchemeIcon() }}</mat-icon>
     </button>
     
+    <button mat-icon-button (click)="onDownloadAll()" aria-label="Download all files as ZIP" matTooltip="Download all (ZIP)">
+      <mat-icon>file_download</mat-icon>
+    </button>
+
     <button mat-icon-button (click)="onShowSettings()" aria-label="Open settings" matTooltip="Settings">
       <mat-icon>settings</mat-icon>
     </button>
