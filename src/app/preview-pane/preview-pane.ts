@@ -64,13 +64,20 @@ export class PreviewPaneComponent {
   );
 
   constructor() {
-    // Update iframe srcdoc and store slide/page count whenever rendered output changes
+    // Update iframe srcdoc and store slide/page count whenever rendered output changes.
+    // Also re-runs when `active()` becomes true so that mobile browsers (which often
+    // defer or discard iframe content inside a hidden tab) always get a fresh srcdoc
+    // when the Preview tab is switched back into view.
     effect(() => {
+      const isActive = this.active();
       const result = this.rendered();
       const proseMode = this.store.proseViewMode();
       const colorScheme = this.store.colorScheme();
       const iframe = this.iframeRef();
-      if (!iframe) return;
+
+      // Don't write to a hidden iframe — mobile browsers may defer the load event
+      // or discard the content entirely. The next activation will re-trigger this effect.
+      if (!iframe || !isActive) return;
 
       if (result.type === 'slides') {
         this.store.setSlideCount(result.slideCount);
@@ -84,7 +91,7 @@ export class PreviewPaneComponent {
 
         // Hide the iframe so the scroll-jump/reflow isn't visible.
         this.proseReloading.set(true);
-        
+
         // Page count is set via postMessage after Paged.js finishes
         iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme);
       }
