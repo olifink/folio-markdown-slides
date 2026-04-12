@@ -123,7 +123,7 @@ export class PreviewPaneComponent {
           if (this.store.proseViewMode() === 'paged') {
             const targetY = this.proseScrollY;
             const win = iframe?.contentWindow;
-            
+
             const restore = () => {
               win?.scrollTo({ top: targetY, behavior: 'instant' });
               this.proseReloading.set(false);
