@@ -5,12 +5,12 @@
       class="cheat-button"
       [matMenuTriggerFor]="menu"
       [attr.aria-label]="cat.label + ' snippets'"
-      (pointerdown)="$event.preventDefault()"
+      (mousedown)="$event.preventDefault()"
     >{{ cat.label }}</button>
 
     <mat-menu #menu="matMenu" class="cheat-menu">
       @for (item of cat.items; track item.label) {
-        <button mat-menu-item (click)="insert.emit(item)" (pointerdown)="$event.preventDefault()">
+        <button mat-menu-item (click)="insert.emit(item)" (mousedown)="$event.preventDefault()">
           <span class="cheat-menu-item">
             <span class="cheat-menu-item__label">{{ item.label }}</span>
             <span class="cheat-menu-item__hint">{{ item.hint }}</span>
