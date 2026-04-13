@@ -7,6 +7,11 @@ export class FsService {
   private readonly promises = this.fs.promises;
 
   async init(): Promise<void> {
+    if (navigator.storage && navigator.storage.persist) {
+      const isPersisted = await navigator.storage.persist();
+      console.log(`[Storage] Persisted storage granted: ${isPersisted}`);
+    }
+
     try {
       await this.promises.mkdir('/documents');
     } catch (e: any) {
