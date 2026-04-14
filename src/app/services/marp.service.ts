@@ -53,10 +53,12 @@ export class MarpService {
    * @param standalone - true for HTML file download (inlines mermaid script);
    *                     false for live preview and print-to-PDF (uses <script src>).
    */
-  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, standalone: boolean = false, title: string = 'Folio Presentation'): string {
+  buildSrcdoc(html: string, css: string = '', isExport: boolean = false, appTheme: 'quiet' | 'clean' = 'quiet', standalone: boolean = false, title: string = 'Folio Presentation'): string {
     const mermaidTag = standalone && this.mermaidContent
       ? `<script>${this.mermaidContent}</script>`
       : `<script src="js/mermaid.min.js"></script>`;
+
+    const htmlAttr = ` data-theme="${appTheme}"`;
 
     // Helper script to handle links within srcdoc.
     // 1. Internal hash links (footnotes) scroll into view.
@@ -233,7 +235,7 @@ ${linkHandlerScript}`;
 `;
 
     return `<!DOCTYPE html>
-<html>
+<html${htmlAttr}>
 <head>
 <meta charset="utf-8">
 <title>${title}</title>

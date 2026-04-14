@@ -21,10 +21,10 @@ export class ExportService {
 
     if (type === 'slides') {
       const { html, css } = this.marpService.render(markdown);
-      fullHtml = this.marpService.buildSrcdoc(html, css, true, true, title);
+      fullHtml = this.marpService.buildSrcdoc(html, css, true, this.store.appTheme(), true, title);
     } else {
       const { html } = this.proseService.render(markdown);
-      fullHtml = this.proseService.buildSrcdoc(html, true, 'paged', 'system', this.store.appTheme(), true, title);
+      fullHtml = this.proseService.buildSrcdoc(html, true, 'paged', 'system', this.store.appTheme(), this.store.prefs().fontFamily, true, title);
     }
 
     const blob = new Blob([fullHtml], { type: 'text/html' });
@@ -40,10 +40,10 @@ export class ExportService {
 
     if (type === 'slides') {
       const { html, css } = this.marpService.render(markdown);
-      fullHtml = this.marpService.buildSrcdoc(html, css, true, false, title);
+      fullHtml = this.marpService.buildSrcdoc(html, css, true, this.store.appTheme(), false, title);
     } else {
       const { html } = this.proseService.render(markdown);
-      fullHtml = this.proseService.buildSrcdoc(html, true, this.store.proseViewMode(), 'system', this.store.appTheme(), false, title);
+      fullHtml = this.proseService.buildSrcdoc(html, true, this.store.proseViewMode(), 'system', this.store.appTheme(), this.store.prefs().fontFamily, false, title);
     }
     
     const printFrame = document.createElement('iframe');

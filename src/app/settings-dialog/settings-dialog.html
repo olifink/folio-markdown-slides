@@ -25,6 +25,20 @@
 
     <div class="setting-item">
       <div class="setting-item__label">
+        <mat-icon>font_download</mat-icon>
+        <span>Font Family</span>
+      </div>
+      <mat-button-toggle-group 
+        [value]="store.prefs().fontFamily" 
+        (change)="store.setFontFamily($event.value)"
+        aria-label="Font family">
+        <mat-button-toggle value="sans-serif">Sans Serif</mat-button-toggle>
+        <mat-button-toggle value="serif">Serif</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="setting-item">
+      <div class="setting-item__label">
         <mat-icon>{{ store.colorScheme() === 'dark' ? 'dark_mode' : store.colorScheme() === 'light' ? 'light_mode' : 'brightness_auto' }}</mat-icon>
         <span>Color Scheme</span>
       </div>

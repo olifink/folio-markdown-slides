@@ -51,11 +51,12 @@ export class ProseService {
     proseMode: 'flow' | 'paged' = 'flow',
     colorScheme: ColorScheme = 'system',
     appTheme: 'quiet' | 'clean' = 'quiet',
+    fontFamily: 'sans-serif' | 'serif' = 'sans-serif',
     standalone: boolean = false,
     title: string = 'Folio Document',
   ): string {
     const isPaged = proseMode === 'paged';
-    const htmlAttr = ` data-theme="${appTheme}"${colorScheme === 'system' ? '' : ` data-color-scheme="${colorScheme}"`}`;
+    const htmlAttr = ` data-theme="${appTheme}" data-font-family="${fontFamily}"${colorScheme === 'system' ? '' : ` data-color-scheme="${colorScheme}"`}`;
 
     const mermaidTag = standalone && this.mermaidContent
       ? `<script>${this.mermaidContent}</script>`
@@ -376,6 +377,20 @@ ${linkHandlerScript}`;
     overscroll-behavior: none;
   }
 
+  html[data-font-family="serif"], 
+  html[data-font-family="serif"] body,
+  html[data-font-family="serif"] h1,
+  html[data-font-family="serif"] h2,
+  html[data-font-family="serif"] h3,
+  html[data-font-family="serif"] h4,
+  html[data-font-family="serif"] h5,
+  html[data-font-family="serif"] h6,
+  html[data-font-family="serif"] .markdown-body h1,
+  html[data-font-family="serif"] .markdown-body h2,
+  html[data-font-family="serif"] .markdown-body h3 {
+    font-family: 'Lora', 'Georgia', 'Times New Roman', serif;
+  }
+
   *, *::before, *::after { box-sizing: border-box; }
 
   /* ── Prose body ── */
@@ -395,7 +410,7 @@ ${linkHandlerScript}`;
 
   /* ── Headings ── */
   h1, h2, h3, h4, h5, h6 {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: inherit;
     line-height: 1.2;
     color: var(--prose-text);
   }

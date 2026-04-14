@@ -86,6 +86,7 @@ export class AppStore {
     lastOpenFile: null,
     preferredTheme: 'default',
     appTheme: 'quiet',
+    fontFamily: 'sans-serif',
     editorFontSize: 16,
     darkMode: 'system',
   });
@@ -237,6 +238,10 @@ export class AppStore {
 
   setAppTheme(theme: AppPrefs['appTheme']): void {
     this.updatePrefs({ appTheme: theme });
+  }
+
+  setFontFamily(family: AppPrefs['fontFamily']): void {
+    this.updatePrefs({ fontFamily: family });
   }
 
   setDarkMode(mode: AppPrefs['darkMode']): void {

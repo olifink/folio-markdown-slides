@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, switchMap } from 'rxjs/operators';
-import { fromEvent, of, timer, merge } from 'rxjs';
+import { fromEvent, of, timer, merge, combineLatest } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { AppStore } from '../store/app-store';
@@ -51,13 +51,16 @@ export class PreviewPaneComponent {
    * Prose uses a longer debounce as Paged.js fragmentation is expensive.
    */
   private readonly rendered = toSignal(
-    toObservable(this.store.currentMarkdown).pipe(
-      switchMap((md, index) => {
-        const debounceTime = index === 0 ? 0 : (this.store.documentType() === 'prose' ? 600 : 300);
-        return timer(debounceTime).pipe(map(() => md));
+    combineLatest([
+      toObservable(this.store.currentMarkdown),
+      toObservable(this.store.documentType)
+    ]).pipe(
+      switchMap(([md, type], index) => {
+        const debounceTime = index === 0 ? 0 : (type === 'prose' ? 600 : 300);
+        return timer(debounceTime).pipe(map(() => ({ md, type })));
       }),
-      map(md => {
-        if (this.store.documentType() === 'slides') {
+      map(({ md, type }) => {
+        if (type === 'slides') {
           return { type: 'slides' as const, ...this.marpService.render(md) };
         } else {
           return { type: 'prose' as const, ...this.proseService.render(md) };
@@ -98,7 +101,7 @@ export class PreviewPaneComponent {
 
       if (result.type === 'slides') {
         this.store.setSlideCount(result.slideCount);
-        iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false);
+        iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false, appTheme);
       } else {
         // Save scroll position before the srcdoc replacement resets it to 0.
         const win = iframe.nativeElement.contentWindow;
@@ -110,7 +113,7 @@ export class PreviewPaneComponent {
         this.proseReloading.set(true);
 
         // Page count is set via postMessage after Paged.js finishes
-        iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme);
+        iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme, this.store.prefs().fontFamily);
       }
     });
 
