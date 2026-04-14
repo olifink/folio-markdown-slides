@@ -39,6 +39,12 @@ export class PreviewPaneComponent {
   /** True while a prose-flow srcdoc swap is in-flight; hides the iframe to avoid scroll-jump flicker. */
   protected readonly proseReloading = signal(false);
 
+  /** 
+   * Tracks document visibility to force a re-render when the app is resumed 
+   * from the background (prevents discarded iframes on Android/iOS).
+   */
+  private readonly isVisible = signal(true);
+
   /**
    * First emission is immediate (no debounce) so the preview populates on load.
    * Subsequent emissions debounce to avoid re-rendering on every keystroke.
@@ -66,12 +72,20 @@ export class PreviewPaneComponent {
   );
 
   constructor() {
+    // Force re-render on visibility change (background -> foreground)
+    fromEvent(document, 'visibilitychange')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.isVisible.set(document.visibilityState === 'visible');
+      });
+
     // Update iframe srcdoc and store slide/page count whenever rendered output changes.
     // Also re-runs when `active()` becomes true so that mobile browsers (which often
     // defer or discard iframe content inside a hidden tab) always get a fresh srcdoc
     // when the Preview tab is switched back into view.
     effect(() => {
       const isActive = this.active();
+      const visible = this.isVisible();
       const result = this.rendered();
       const proseMode = this.store.proseViewMode();
       const colorScheme = this.store.colorScheme();
@@ -79,7 +93,7 @@ export class PreviewPaneComponent {
 
       // Don't write to a hidden iframe — mobile browsers may defer the load event
       // or discard the content entirely. The next activation will re-trigger this effect.
-      if (!iframe || !isActive) return;
+      if (!iframe || !isActive || !visible) return;
 
       if (result.type === 'slides') {
         this.store.setSlideCount(result.slideCount);
