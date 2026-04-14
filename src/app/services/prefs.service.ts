@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 export interface AppPrefs {
   lastOpenFile: string | null;
   preferredTheme: 'default' | 'gaia' | 'uncover';
+  appTheme: 'quiet' | 'clean';
   editorFontSize: number;
   darkMode: 'system' | 'light' | 'dark';
 }
@@ -10,6 +11,7 @@ export interface AppPrefs {
 const DEFAULT_PREFS: AppPrefs = {
   lastOpenFile: null,
   preferredTheme: 'default',
+  appTheme: 'quiet',
   editorFontSize: 16,
   darkMode: 'system',
 };

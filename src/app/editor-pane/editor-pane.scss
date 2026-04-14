@@ -10,9 +10,13 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  font-family: var(--font-editor);
+  font-size: var(--editor-font-size, 16px);
+  line-height: 1.6;
 
   // Let CodeMirror fill the host element
-  .cm-editor {
+  ::ng-deep .cm-editor {
     height: 100%;
+    outline: none !important;
   }
 }

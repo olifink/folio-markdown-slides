@@ -4,38 +4,32 @@
 
 // Default: light
 html {
-  @include mat.theme((
-    color: (
-      primary: mat.$violet-palette,
-      tertiary: mat.$chartreuse-palette,
-      theme-type: light,
-    ),
-    typography: 'Inter',
-    density: 0,
-  ));
+  @include mat.theme((color: (primary: mat.$violet-palette,
+        tertiary: mat.$chartreuse-palette,
+        theme-type: light,
+      ),
+      typography: 'Inter',
+      density: 0,
+    ));
 }
 
 // Explicit dark override ([data-color-scheme="dark"] set by AppComponent)
 html[data-color-scheme="dark"] {
-  @include mat.theme((
-    color: (
-      primary: mat.$violet-palette,
-      tertiary: mat.$chartreuse-palette,
-      theme-type: dark,
-    ),
-  ));
+  @include mat.theme((color: (primary: mat.$violet-palette,
+        tertiary: mat.$chartreuse-palette,
+        theme-type: dark,
+      ),
+    ));
 }
 
 // System dark — only when the user hasn't forced light
 @media (prefers-color-scheme: dark) {
   html:not([data-color-scheme="light"]) {
-    @include mat.theme((
-      color: (
-        primary: mat.$violet-palette,
-        tertiary: mat.$chartreuse-palette,
-        theme-type: dark,
-      ),
-    ));
+    @include mat.theme((color: (primary: mat.$violet-palette,
+          tertiary: mat.$chartreuse-palette,
+          theme-type: dark,
+        ),
+      ));
   }
 }
 
@@ -43,71 +37,149 @@ html[data-color-scheme="dark"] {
 // Never hardcode these hex values in component SCSS — always reference the var.
 
 :root {
-  // Brand accents (same in both modes)
-  --color-volt:       #C8FF00;
-  --color-plasma:     #7C4DFF;
-  --color-neon-coral: #FF4D6D;
-
-  // Light-mode surfaces: Post-it inspired light purple/lavender
-  --surface:           #FBF9FF;
-  --surface-container: #F3F0FF;
-  --on-surface:        #18181F;
-  --outline:           #DFD9F2;
-
   // Typography
-  --font-ui:     'Inter', system-ui, sans-serif;
+  --font-ui: 'Inter', system-ui, sans-serif;
   --font-editor: 'JetBrains Mono', 'Fira Code', monospace;
-
-  // Editor — slide separator bar (light mode defaults)
-  --cm-separator-bg:    rgba(255, 77, 109, 0.05);
-  --cm-separator-color: #FF4D6D;
-
-  // Editor — syntax highlight colors (light mode defaults)
-  --cm-color-heading:   #18181F;
-  --cm-color-emphasis:  #FF4D6D;
-  --cm-color-code:      #00BFA5;
-  --cm-color-comment:   #888899;
-  --cm-color-meta:      #7C4DFF;
 }
 
-// System preference: dark
+// Default variables (Quiet theme, light mode)
+:root,
+[data-theme="quiet"] {
+  --color-volt: #C8FF00;
+  --color-plasma: #7C4DFF;
+  --color-neon-coral: #FF4D6D;
+
+  --surface: #FBF9FF;
+  --surface-container: #F3F0FF;
+  --on-surface: #18181F;
+  --outline: #DFD9F2;
+
+  --cm-separator-bg: rgba(255, 77, 109, 0.05);
+  --cm-separator-color: #FF4D6D;
+
+  --cm-color-heading: #18181F;
+  --cm-color-emphasis: #FF4D6D;
+  --cm-color-code: #00BFA5;
+  --cm-color-comment: #888899;
+  --cm-color-meta: #7C4DFF;
+}
+
+// Dark mode for Quiet theme
 @media (prefers-color-scheme: dark) {
-  :root:not([data-color-scheme="light"]) {
-    --surface:           #111116;
+
+  :root:not([data-color-scheme="light"]),
+  [data-theme="quiet"]:not([data-color-scheme="light"]) {
+    --surface: #111116;
     --surface-container: #1C1C24;
-    --on-surface:        #E8E8F2;
-    --outline:           #2E2E3E;
-    --cm-separator-bg:    #1C1C24;
+    --on-surface: #E8E8F2;
+    --outline: #2E2E3E;
+    --cm-separator-bg: #1C1C24;
     --cm-separator-color: #C8FF00;
-    --cm-color-heading:   #E8E8F2;
-    --cm-color-emphasis:  #FF6B85;
-    --cm-color-code:      #1DE9B6;
-    --cm-color-comment:   #6666AA;
-    --cm-color-meta:      #9E72FF;
+    --cm-color-heading: #E8E8F2;
+    --cm-color-emphasis: #FF6B85;
+    --cm-color-code: #1DE9B6;
+    --cm-color-comment: #6666AA;
+    --cm-color-meta: #9E72FF;
   }
 }
 
-// Forced dark
-[data-color-scheme="dark"] {
-  --surface:           #111116;
+[data-theme="quiet"][data-color-scheme="dark"],
+[data-color-scheme="dark"]:not([data-theme="clean"]) {
+  --surface: #111116;
   --surface-container: #1C1C24;
-  --on-surface:        #E8E8F2;
-  --outline:           #2E2E3E;
-  --cm-separator-bg:    #1C1C24;
+  --on-surface: #E8E8F2;
+  --outline: #2E2E3E;
+  --cm-separator-bg: #1C1C24;
   --cm-separator-color: #C8FF00;
-  --cm-color-heading:   #E8E8F2;
-  --cm-color-emphasis:  #FF6B85;
-  --cm-color-code:      #1DE9B6;
-  --cm-color-comment:   #6666AA;
-  --cm-color-meta:      #9E72FF;
+  --cm-color-heading: #E8E8F2;
+  --cm-color-emphasis: #FF6B85;
+  --cm-color-code: #1DE9B6;
+  --cm-color-comment: #6666AA;
+  --cm-color-meta: #9E72FF;
 }
 
-// Forced light — also resets back to light even when system is dark
-[data-color-scheme="light"] {
-  --surface:           #F8F8FC;
+// Forced light for Quiet theme
+[data-theme="quiet"][data-color-scheme="light"],
+[data-color-scheme="light"]:not([data-theme="clean"]) {
+  --surface: #F8F8FC;
   --surface-container: #EFEFF5;
-  --on-surface:        #18181F;
-  --outline:           #C8C8D8;
+  --on-surface: #18181F;
+  --outline: #C8C8D8;
+}
+
+// ── Theme: CLEAN (Modern white/black with orange accent) ───────────────────────
+
+[data-theme="clean"] {
+  --color-volt: #ffb700; // Bright Orange accent
+  --color-plasma: #ffb700;
+  --color-neon-coral: #FF3B30;
+
+  --surface: #FFFFFF;
+  --surface-container: #faf9ff;
+  --on-surface: #000000;
+  --outline: #f2f2f7;
+
+  --cm-separator-bg: rgba(255, 149, 0, 0.05);
+  --cm-separator-color: #ffb700;
+
+  --cm-color-heading: #000000;
+  --cm-color-emphasis: #FF9500;
+  --cm-color-code: #007AFF;
+  --cm-color-comment: #8E8E93;
+  --cm-color-meta: #5856D6;
+
+  // Dark mode for Clean theme
+  @media (prefers-color-scheme: dark) {
+    &:not([data-color-scheme="light"]) {
+      --surface: #000000;
+      --surface-container: #0d0d0d;
+      --on-surface: #FFFFFF;
+      --outline: #38383A;
+      --cm-separator-bg: #0d0d0d;
+      --cm-separator-color: #FF9500;
+      --cm-color-heading: #FFFFFF;
+      --cm-color-emphasis: #FF9500;
+      --cm-color-code: #64D2FF;
+      --cm-color-comment: #8E8E93;
+      --cm-color-meta: #BF5AF2;
+    }
+  }
+
+  &[data-color-scheme="dark"] {
+    --surface: #000000;
+    --surface-container: #0d0d0d;
+    --on-surface: #FFFFFF;
+    --outline: #38383A;
+    --cm-separator-bg: #0d0d0d;
+    --cm-separator-color: #FF9500;
+    --cm-color-heading: #FFFFFF;
+    --cm-color-emphasis: #FF9500;
+    --cm-color-code: #64D2FF;
+    --cm-color-comment: #8E8E93;
+    --cm-color-meta: #BF5AF2;
+  }
+
+  &[data-color-scheme="light"] {
+    --surface: #FFFFFF;
+    --surface-container: #faf9ff;
+    --on-surface: #000000;
+    --outline: #D1D1D6;
+  }
+
+  // FAB Overrides for Clean Theme
+  .mat-mdc-fab,
+  .mat-mdc-mini-fab {
+
+    &.present-fab,
+    &.prose-toggle-fab {
+      background-color: var(--color-volt) !important;
+      color: #FFFFFF !important;
+
+      mat-icon {
+        color: #FFFFFF !important;
+      }
+    }
+  }
 }
 
 // ── Global base ──────────────────────────────────────────────────────────────
@@ -182,9 +254,11 @@ body {
 
 // ── Help Dialog ──────────────────────────────────────────────────────────────
 
-.folio-help-dialog {
+.folio-help-dialog,
+.folio-settings-dialog {
   .mat-mdc-dialog-container {
     --mdc-dialog-container-shape: 28px;
+
     .mdc-dialog__surface {
       border-radius: 28px;
       background-color: var(--surface);

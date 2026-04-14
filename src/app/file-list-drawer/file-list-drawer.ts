@@ -3,8 +3,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AppStore, SAMPLE_MARKDOWN, SAMPLE_PROSE } from '../store/app-store';
+import { SettingsDialogComponent } from '../settings-dialog/settings-dialog';
 import { FsService } from '../services/fs.service';
 import JSZip from 'jszip';
 
@@ -28,6 +30,7 @@ const COLOR_SCHEME_LABEL: Record<string, string> = {
     MatTooltipModule,
     MatSnackBarModule,
     MatMenuModule,
+    MatDialogModule,
   ],
   templateUrl: './file-list-drawer.html',
   styleUrl: './file-list-drawer.scss',
@@ -37,6 +40,7 @@ export class FileListDrawerComponent {
   protected readonly store = inject(AppStore);
   protected readonly fs = inject(FsService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly colorSchemeIcon = computed(
     () => COLOR_SCHEME_ICON[this.store.colorScheme()],
@@ -100,7 +104,11 @@ export class FileListDrawerComponent {
   }
 
   onShowSettings(): void {
-    // Settings logic could be added here later
-    this.snackBar.open('Settings coming soon!', 'Dismiss', { duration: 2000 });
+    this.dialog.open(SettingsDialogComponent, {
+      width: '90vw',
+      maxWidth: '500px',
+      maxHeight: '90vh',
+      panelClass: 'folio-settings-dialog'
+    });
   }
 }

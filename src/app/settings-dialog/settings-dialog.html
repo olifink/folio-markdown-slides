@@ -1,0 +1,59 @@
+<div class="dialog-header">
+  <h2 mat-dialog-title>Settings</h2>
+  <button mat-icon-button (click)="close()" aria-label="Close dialog">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<mat-dialog-content class="settings-content">
+  <section class="settings-section">
+    <h3 class="settings-section__title">Appearance</h3>
+    
+    <div class="setting-item">
+      <div class="setting-item__label">
+        <mat-icon>palette</mat-icon>
+        <span>Theme</span>
+      </div>
+      <mat-button-toggle-group 
+        [value]="store.appTheme()" 
+        (change)="store.setAppTheme($event.value)"
+        aria-label="App theme">
+        <mat-button-toggle value="quiet">Quiet</mat-button-toggle>
+        <mat-button-toggle value="clean">Clean</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="setting-item">
+      <div class="setting-item__label">
+        <mat-icon>{{ store.colorScheme() === 'dark' ? 'dark_mode' : store.colorScheme() === 'light' ? 'light_mode' : 'brightness_auto' }}</mat-icon>
+        <span>Color Scheme</span>
+      </div>
+      <mat-button-toggle-group 
+        [value]="store.colorScheme()" 
+        (change)="store.setDarkMode($event.value)"
+        aria-label="Color scheme">
+        <mat-button-toggle value="system">System</mat-button-toggle>
+        <mat-button-toggle value="light">Light</mat-button-toggle>
+        <mat-button-toggle value="dark">Dark</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h3 class="settings-section__title">Editor</h3>
+
+    <div class="setting-item vertical">
+      <div class="setting-item__label">
+        <mat-icon>format_size</mat-icon>
+        <span>Font Size ({{ store.prefs().editorFontSize }}px)</span>
+      </div>
+      <mat-slider min="12" max="32" step="1" discrete showTickMarks>
+        <input matSliderThumb [value]="store.prefs().editorFontSize" (valueChange)="store.setEditorFontSize($event)">
+      </mat-slider>
+    </div>
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+</mat-dialog-actions>

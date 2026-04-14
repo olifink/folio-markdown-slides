@@ -84,11 +84,12 @@ export class PreviewPaneComponent {
     // defer or discard iframe content inside a hidden tab) always get a fresh srcdoc
     // when the Preview tab is switched back into view.
     effect(() => {
-      const isActive = this.active();
-      const visible = this.isVisible();
       const result = this.rendered();
       const proseMode = this.store.proseViewMode();
       const colorScheme = this.store.colorScheme();
+      const appTheme = this.store.appTheme();
+      const isActive = this.active();
+      const visible = this.isVisible();
       const iframe = this.iframeRef();
 
       // Don't write to a hidden iframe — mobile browsers may defer the load event
@@ -109,7 +110,7 @@ export class PreviewPaneComponent {
         this.proseReloading.set(true);
 
         // Page count is set via postMessage after Paged.js finishes
-        iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme);
+        iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme);
       }
     });
 

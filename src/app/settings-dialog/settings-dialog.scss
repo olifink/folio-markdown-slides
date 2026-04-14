@@ -1,0 +1,91 @@
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--outline);
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+}
+
+.settings-content {
+  padding: 1.5rem !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 320px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &__title {
+    margin: 0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-plasma);
+    font-weight: 600;
+  }
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  &.vertical {
+    flex-direction: column;
+    align-items: flex-start;
+
+    mat-slider {
+      width: 100%;
+      margin-left: -8px; // align with text
+    }
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--on-surface);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      opacity: 0.7;
+    }
+  }
+}
+
+::ng-deep .mat-mdc-button-toggle-group {
+  border-radius: 8px !important;
+  border: 1px solid var(--outline) !important;
+  background-color: var(--surface-container) !important;
+}
+
+::ng-deep .mat-mdc-button-toggle {
+  background-color: transparent !important;
+  color: var(--on-surface) !important;
+  font-size: 0.8125rem !important;
+
+  &.mat-mdc-button-toggle-checked {
+    background-color: var(--surface) !important;
+    color: var(--color-plasma) !important;
+  }
+}
+
+::ng-deep .mat-mdc-slider {
+  --mdc-slider-handle-color: var(--color-plasma);
+  --mdc-slider-active-track-color: var(--color-plasma);
+  --mdc-slider-inactive-track-color: var(--outline);
+}

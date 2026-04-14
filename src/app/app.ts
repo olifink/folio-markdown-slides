@@ -234,11 +234,30 @@ export class App {
     // theme rules can respond without a page reload.
     effect(() => {
       const scheme = this.store.colorScheme();
+      const theme = this.store.appTheme();
       const html = document.documentElement;
+      
       if (scheme === 'system') {
         html.removeAttribute('data-color-scheme');
       } else {
         html.setAttribute('data-color-scheme', scheme);
+      }
+
+      html.setAttribute('data-theme', theme);
+
+      // Update PWA title bar color (theme-color meta tag)
+      let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.setAttribute('name', 'theme-color');
+        document.head.appendChild(metaThemeColor);
+      }
+
+      // We'll use the surface-container color as the theme color
+      const style = getComputedStyle(html);
+      const color = style.getPropertyValue('--surface-container').trim();
+      if (color) {
+        metaThemeColor.setAttribute('content', color);
       }
     });
 

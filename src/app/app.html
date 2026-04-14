@@ -96,7 +96,7 @@
           (cdkDragEnded)="onDragEnd()"
           (cdkDragMoved)="onResize($event)"
         ></div>
-        <app-preview-pane class="split-pane__preview" />
+        <app-preview-pane class="split-pane__preview" [active]="true" />
       </div>
     } @else {
       <mat-tab-group class="tab-group" animationDuration="200ms" role="main"

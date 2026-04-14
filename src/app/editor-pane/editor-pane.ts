@@ -77,6 +77,13 @@ export class EditorPaneComponent {
       }
     });
 
+    // Apply font size from prefs
+    effect(() => {
+      const size = this.store.prefs().editorFontSize;
+      const host = this.editorHost().nativeElement;
+      host.style.setProperty('--editor-font-size', `${size}px`);
+    });
+
     this.destroyRef.onDestroy(() => this.editorView?.destroy());
   }
 
