@@ -15,7 +15,7 @@
         <span>Theme</span>
       </div>
       <mat-button-toggle-group 
-        [value]="store.appTheme()" 
+        [value]="currentAppTheme()" 
         (change)="store.setAppTheme($event.value)"
         aria-label="App theme">
         <mat-button-toggle value="quiet">Quiet</mat-button-toggle>
@@ -29,7 +29,7 @@
         <span>Font Family</span>
       </div>
       <mat-button-toggle-group 
-        [value]="store.prefs().fontFamily" 
+        [value]="currentFontFamily()" 
         (change)="store.setFontFamily($event.value)"
         aria-label="Font family">
         <mat-button-toggle value="sans-serif">Sans Serif</mat-button-toggle>
@@ -39,11 +39,11 @@
 
     <div class="setting-item">
       <div class="setting-item__label">
-        <mat-icon>{{ store.colorScheme() === 'dark' ? 'dark_mode' : store.colorScheme() === 'light' ? 'light_mode' : 'brightness_auto' }}</mat-icon>
+        <mat-icon>{{ currentColorScheme() === 'dark' ? 'dark_mode' : currentColorScheme() === 'light' ? 'light_mode' : 'brightness_auto' }}</mat-icon>
         <span>Color Scheme</span>
       </div>
       <mat-button-toggle-group 
-        [value]="store.colorScheme()" 
+        [value]="currentColorScheme()" 
         (change)="store.setDarkMode($event.value)"
         aria-label="Color scheme">
         <mat-button-toggle value="system">System</mat-button-toggle>
@@ -59,10 +59,10 @@
     <div class="setting-item vertical">
       <div class="setting-item__label">
         <mat-icon>format_size</mat-icon>
-        <span>Font Size ({{ store.prefs().editorFontSize }}px)</span>
+        <span>Font Size ({{ currentEditorFontSize() }}px)</span>
       </div>
       <mat-slider min="12" max="32" step="1" discrete showTickMarks>
-        <input matSliderThumb [value]="store.prefs().editorFontSize" (valueChange)="store.setEditorFontSize($event)">
+        <input matSliderThumb [value]="currentEditorFontSize()" (valueChange)="store.setEditorFontSize($event)">
       </mat-slider>
     </div>
   </section>

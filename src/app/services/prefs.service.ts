@@ -40,7 +40,7 @@ export class PrefsService {
       request.onsuccess = async () => {
         this.db = request.result;
         const prefs = await this.get();
-        resolve(prefs || DEFAULT_PREFS);
+        resolve({ ...DEFAULT_PREFS, ...prefs });
       };
 
       request.onerror = () => reject(request.error);

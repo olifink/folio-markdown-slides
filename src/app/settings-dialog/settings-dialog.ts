@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed } from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -22,6 +22,11 @@ import { AppStore } from '../store/app-store';
 export class SettingsDialogComponent {
   protected readonly store = inject(AppStore);
   private readonly dialogRef = inject(MatDialogRef<SettingsDialogComponent>);
+
+  protected readonly currentAppTheme = computed(() => this.store.appTheme());
+  protected readonly currentFontFamily = computed(() => this.store.prefs().fontFamily);
+  protected readonly currentColorScheme = computed(() => this.store.colorScheme());
+  protected readonly currentEditorFontSize = computed(() => this.store.prefs().editorFontSize);
 
   protected close(): void {
     this.dialogRef.close();
