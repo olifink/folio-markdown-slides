@@ -106,8 +106,7 @@ export class PreviewPaneComponent {
       });
 
     // Update iframe srcdoc and store slide/page count whenever rendered output changes.
-    // Also re-runs when `active()` becomes true or when the app is resumed so that
-    // mobile browsers (which often discard iframe content) always get a fresh srcdoc.
+    // This effect handles standard content updates and tab switching.
     effect(() => {
       const result = this.rendered();
       const proseMode = this.store.proseViewMode();
@@ -115,15 +114,14 @@ export class PreviewPaneComponent {
       const appTheme = this.store.appTheme();
       const isActive = this.active();
       const visible = this.isVisible();
-      const trigger = this.refreshTrigger();
       const iframe = this.iframeRef();
 
-      // Don't write to a hidden iframe — mobile browsers may defer the load event
-      // or discard the content entirely. The next activation will re-trigger this effect.
+      // Don't write to a hidden iframe.
       if (!iframe || !isActive || !visible) return;
 
-      // Append a tiny cache-buster comment to the srcdoc to force a reload even 
-      // if the HTML content is identical to the previous value.
+      // We use untracked for the trigger because we only want to force a reload
+      // via the dedicated resumption effect below, not every time the tab changes.
+      const trigger = untracked(() => this.refreshTrigger());
       const reloadMeta = `<!-- r:${trigger} -->`;
 
       if (result.type === 'slides') {
@@ -131,17 +129,13 @@ export class PreviewPaneComponent {
         this.proseReloading.set(false);
         iframe.nativeElement.srcdoc = this.marpService.buildSrcdoc(result.html, result.css, false, appTheme) + reloadMeta;
       } else {
-        // Save scroll position before the srcdoc replacement resets it to 0.
         const win = iframe.nativeElement.contentWindow;
         const scrollEl = iframe.nativeElement.contentDocument?.documentElement;
         const bodyEl = iframe.nativeElement.contentDocument?.body;
         this.proseScrollY = win?.pageYOffset ?? win?.scrollY ?? scrollEl?.scrollTop ?? bodyEl?.scrollTop ?? 0;
 
-        // Hide the iframe so the scroll-jump/reflow isn't visible.
         this.proseReloading.set(true);
         
-        // Failsafe: if the iframe takes too long to report back (postMessage lost),
-        // reveal it anyway so the user doesn't see a blank screen.
         clearTimeout(this.reloadingTimeout);
         this.reloadingTimeout = setTimeout(() => {
           if (untracked(() => this.proseReloading())) {
@@ -149,8 +143,25 @@ export class PreviewPaneComponent {
           }
         }, 3000);
 
-        // Page count is set via postMessage after Paged.js finishes
         iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme, this.store.prefs().fontFamily) + reloadMeta;
+      }
+    });
+
+    // Dedicated effect to force a refresh when the app is resumed from background.
+    // This is separate so it doesn't trigger on every tab switch.
+    effect(() => {
+      const trigger = this.refreshTrigger();
+      if (trigger === 0) return;
+
+      // Only force the reload if we are currently active. If we're not active,
+      // the main effect will handle it naturally when we next switch to the tab.
+      if (untracked(() => this.active() && this.isVisible())) {
+        const iframe = untracked(() => this.iframeRef());
+        if (iframe) {
+          // Re-trigger the main effect by slightly modifying the srcdoc
+          const current = iframe.nativeElement.srcdoc;
+          iframe.nativeElement.srcdoc = current.replace(/<!-- r:\d+ -->/, `<!-- r:${trigger} -->`);
+        }
       }
     });
 
