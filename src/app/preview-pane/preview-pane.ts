@@ -7,10 +7,11 @@ import {
   input,
   output,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { filter, map, switchMap } from 'rxjs/operators';
+import { filter, map, switchMap, distinctUntilChanged, take } from 'rxjs/operators';
 import { fromEvent, of, timer, merge, combineLatest } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -38,6 +39,7 @@ export class PreviewPaneComponent {
   private proseScrollY = 0;
   /** True while a prose-flow srcdoc swap is in-flight; hides the iframe to avoid scroll-jump flicker. */
   protected readonly proseReloading = signal(false);
+  private reloadingTimeout?: any;
 
   /** 
    * Tracks document visibility and focus to force a re-render when the app 
@@ -78,21 +80,27 @@ export class PreviewPaneComponent {
 
   constructor() {
     // Force re-render on visibility/focus change (background -> foreground).
-    // We use a combination of events to be robust across mobile OSs.
+    // We use a combination of events and a delay to be robust against 
+    // mobile OS "thawing" logic and PWA suspension.
     merge(
       fromEvent(document, 'visibilitychange'),
       fromEvent(window, 'focus'),
       fromEvent(window, 'pageshow'),
     )
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => {
-        const isVisible = document.visibilityState === 'visible';
+      .pipe(
+        takeUntilDestroyed(),
+        // Stabilization delay: wait for the webview to be fully active 
+        // before we check visibility and potentially trigger a reload.
+        switchMap(() => timer(300).pipe(map(() => document.visibilityState === 'visible'))),
+        distinctUntilChanged()
+      )
+      .subscribe(visible => {
         const wasHidden = !this.isVisible();
-        this.isVisible.set(isVisible);
+        this.isVisible.set(visible);
         
         // If we transitioned from hidden to visible, increment the trigger
         // to force a srcdoc reload in the effect below.
-        if (isVisible && wasHidden) {
+        if (visible && wasHidden) {
           this.refreshTrigger.update(n => n + 1);
         }
       });
@@ -131,6 +139,15 @@ export class PreviewPaneComponent {
 
         // Hide the iframe so the scroll-jump/reflow isn't visible.
         this.proseReloading.set(true);
+        
+        // Failsafe: if the iframe takes too long to report back (postMessage lost),
+        // reveal it anyway so the user doesn't see a blank screen.
+        clearTimeout(this.reloadingTimeout);
+        this.reloadingTimeout = setTimeout(() => {
+          if (untracked(() => this.proseReloading())) {
+            this.proseReloading.set(false);
+          }
+        }, 3000);
 
         // Page count is set via postMessage after Paged.js finishes
         iframe.nativeElement.srcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme, this.store.prefs().fontFamily) + reloadMeta;
