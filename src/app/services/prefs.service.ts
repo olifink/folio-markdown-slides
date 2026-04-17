@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 export interface AppPrefs {
   lastOpenFile: string | null;
+  lastTab: number;
   preferredTheme: 'default' | 'gaia' | 'uncover';
   appTheme: 'quiet' | 'clean';
   fontFamily: 'sans-serif' | 'serif';
@@ -11,6 +12,7 @@ export interface AppPrefs {
 
 const DEFAULT_PREFS: AppPrefs = {
   lastOpenFile: null,
+  lastTab: 0,
   preferredTheme: 'default',
   appTheme: 'quiet',
   fontFamily: 'sans-serif',

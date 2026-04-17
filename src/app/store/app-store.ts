@@ -84,12 +84,15 @@ export class AppStore {
   readonly isDirty = signal(false);
   readonly prefs = signal<AppPrefs>({
     lastOpenFile: null,
+    lastTab: 0,
     preferredTheme: 'default',
     appTheme: 'quiet',
     fontFamily: 'sans-serif',
     editorFontSize: 16,
     darkMode: 'system',
   });
+
+  readonly selectedTab = signal(0);
 
   readonly colorScheme = computed(() => this.prefs().darkMode);
   readonly appTheme = computed(() => this.prefs().appTheme);
@@ -112,6 +115,7 @@ export class AppStore {
     await this.fs.init();
     const prefs = await this.prefsService.init();
     this.prefs.set(prefs);
+    this.selectedTab.set(prefs.lastTab);
 
     await this.refreshList();
     const list = this.fileList();
@@ -250,6 +254,11 @@ export class AppStore {
 
   setEditorFontSize(size: number): void {
     this.updatePrefs({ editorFontSize: size });
+  }
+
+  setSelectedTab(index: number): void {
+    this.selectedTab.set(index);
+    this.updatePrefs({ lastTab: index });
   }
 
   togglePreview(): void {

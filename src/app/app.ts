@@ -84,7 +84,6 @@ export class App {
   );
 
   protected readonly isDragging = signal(false);
-  protected readonly selectedTab = signal(0);
 
   protected readonly isEditingTitle = signal(false);
   protected readonly editValue = signal('');
@@ -107,12 +106,12 @@ export class App {
     // Threshold: at least 50px horizontal, and horizontal must be 
     // significantly larger than vertical (to ignore scroll).
     if (Math.abs(diffX) > 50 && Math.abs(diffX) > diffY) {
-      if (diffX > 0 && this.selectedTab() === 0) {
+      if (diffX > 0 && this.store.selectedTab() === 0) {
         // Swipe left (forward to preview)
-        this.selectedTab.set(1);
-      } else if (diffX < 0 && this.selectedTab() === 1) {
+        this.store.setSelectedTab(1);
+      } else if (diffX < 0 && this.store.selectedTab() === 1) {
         // Swipe right (back to editor)
-        this.selectedTab.set(0);
+        this.store.setSelectedTab(0);
       }
     }
   }
