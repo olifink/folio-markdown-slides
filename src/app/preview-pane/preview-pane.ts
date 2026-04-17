@@ -37,10 +37,11 @@ export class PreviewPaneComponent {
 
   /** Saved scroll offset (px) of the prose preview before its srcdoc is replaced. */
   private proseScrollY = 0;
-  /** True while a prose-flow srcdoc swap is in-flight; hides the iframe to avoid scroll-jump flicker. */
-  protected readonly proseReloading = signal(false);
+  /** True while a srcdoc swap is in-flight; hides the iframe to avoid scroll-jump flicker. */
+  protected readonly isPreviewLoading = signal(false);
   private reloadingTimeout?: any;
   private lastSrcdoc = '';
+  private lastTrigger = 0;
 
   /** 
    * Tracks document visibility and focus to force a re-render when the app 
@@ -81,8 +82,6 @@ export class PreviewPaneComponent {
 
   constructor() {
     // Force re-render on visibility/focus change (background -> foreground).
-    // We use a combination of events and a delay to be robust against 
-    // mobile OS "thawing" logic and PWA suspension.
     merge(
       fromEvent(document, 'visibilitychange'),
       fromEvent(window, 'focus'),
@@ -90,8 +89,6 @@ export class PreviewPaneComponent {
     )
       .pipe(
         takeUntilDestroyed(),
-        // Stabilization delay: wait for the webview to be fully active 
-        // before we check visibility and potentially trigger a reload.
         switchMap(() => timer(300).pipe(map(() => document.visibilityState === 'visible'))),
         distinctUntilChanged()
       )
@@ -99,8 +96,6 @@ export class PreviewPaneComponent {
         const wasHidden = !this.isVisible();
         this.isVisible.set(visible);
         
-        // If we transitioned from hidden to visible, increment the trigger
-        // to force a srcdoc reload in the effect below.
         if (visible && wasHidden) {
           this.refreshTrigger.update(n => n + 1);
         }
@@ -119,7 +114,6 @@ export class PreviewPaneComponent {
 
       if (!iframe || !isActive || !visible) return;
 
-      // Calculate the next srcdoc including a cache-buster trigger.
       const reloadMeta = `<!-- r:${trigger} -->`;
       let nextSrcdoc = '';
       
@@ -129,42 +123,42 @@ export class PreviewPaneComponent {
         nextSrcdoc = this.proseService.buildSrcdoc(result.html, false, proseMode, colorScheme, appTheme, this.store.prefs().fontFamily) + reloadMeta;
       }
 
-      // Optimization: If the content (including the resumption trigger) is identical
-      // to what is already in the iframe, do nothing. This prevents the "every time 
-      // I switch tabs" delay while still ensuring reloads happen when necessary.
       if (nextSrcdoc === this.lastSrcdoc) {
         return;
       }
       this.lastSrcdoc = nextSrcdoc;
 
+      // Check if this render was triggered by a background resumption
+      const isResumption = trigger > this.lastTrigger;
+      this.lastTrigger = trigger;
+
+      // Hide the iframe during reload to prevent flicker/jump
+      this.isPreviewLoading.set(true);
+
       if (result.type === 'slides') {
         this.store.setSlideCount(result.slideCount);
-        this.proseReloading.set(false);
-        iframe.nativeElement.srcdoc = nextSrcdoc;
       } else {
         const win = iframe.nativeElement.contentWindow;
         const scrollEl = iframe.nativeElement.contentDocument?.documentElement;
         const bodyEl = iframe.nativeElement.contentDocument?.body;
         this.proseScrollY = win?.pageYOffset ?? win?.scrollY ?? scrollEl?.scrollTop ?? bodyEl?.scrollTop ?? 0;
-
-        this.proseReloading.set(true);
-        
-        clearTimeout(this.reloadingTimeout);
-        this.reloadingTimeout = setTimeout(() => {
-          if (untracked(() => this.proseReloading())) {
-            this.proseReloading.set(false);
-            
-            // Nuclear option: If the failsafe hits after a background resumption (trigger > 0),
-            // the app shell's bridge to the iframe is likely corrupted by the OS.
-            // A full page reload is the only reliable way to recover the PWA state.
-            if (trigger > 0) {
-              window.location.reload();
-            }
-          }
-        }, 2000);
-
-        iframe.nativeElement.srcdoc = nextSrcdoc;
       }
+
+      // Aggressive Failsafe: If the iframe doesn't report back within 500ms
+      clearTimeout(this.reloadingTimeout);
+      this.reloadingTimeout = setTimeout(() => {
+        if (untracked(() => this.isPreviewLoading())) {
+          // If we are resuming from background and it's stuck, do a full page reload.
+          if (isResumption) {
+            window.location.reload();
+          } else {
+            // Otherwise (normal editing), just reveal the iframe and hope for the best.
+            this.isPreviewLoading.set(false);
+          }
+        }
+      }, 500);
+
+      iframe.nativeElement.srcdoc = nextSrcdoc;
     });
 
     // Scroll to current slide (only relevant for slides mode)
@@ -186,9 +180,6 @@ export class PreviewPaneComponent {
       .pipe(takeUntilDestroyed())
       .subscribe(e => {
         const iframe = this.iframeRef()?.nativeElement;
-        
-        // Robust source check: check for either matching contentWindow OR our unique identifier.
-        // Some mobile browsers have issues with e.source being consistent for about:srcdoc.
         const isFromOurIframe = e.source === iframe?.contentWindow || e.data?.folioIdentifier === 'folio-preview';
         if (!isFromOurIframe) return;
 
@@ -198,26 +189,23 @@ export class PreviewPaneComponent {
           }
         }
 
-        if (e.data?.pageCount !== undefined || e.data?.type === 'flowLoaded') {
+        if (e.data?.pageCount !== undefined || e.data?.type === 'flowLoaded' || e.data?.slideIndex !== undefined) {
           if (e.data?.pageCount !== undefined) {
             this.store.setSlideCount(e.data.pageCount);
           }
           
-          if (this.store.proseViewMode() === 'paged') {
+          if (this.store.documentType() === 'prose' && this.store.proseViewMode() === 'paged') {
             const targetY = this.proseScrollY;
             const win = iframe?.contentWindow;
-
             const restore = () => {
               win?.scrollTo({ top: targetY, behavior: 'instant' });
-              this.proseReloading.set(false);
+              this.isPreviewLoading.set(false);
               clearTimeout(this.reloadingTimeout);
             };
-
-            // Double-hit restoration to ensure it sticks after layout/paint
             restore();
             requestAnimationFrame(restore);
           } else {
-            this.proseReloading.set(false);
+            this.isPreviewLoading.set(false);
             clearTimeout(this.reloadingTimeout);
           }
         }
@@ -230,12 +218,11 @@ export class PreviewPaneComponent {
     if (!iframe) return;
     iframe.contentWindow?.postMessage({ folioIdentifier: 'folio-preview', slideIndex: this.store.currentSlideIndex() }, '*');
 
-    // For flow mode, the document is fully laid out at load time — restore scroll immediately,
-    // then reveal the iframe (was hidden to suppress the scroll-jump flicker).
-    // Paged mode is handled after the pageCount postMessage (Paged.js runs asynchronously).
-    if (this.store.documentType() === 'prose' && this.store.proseViewMode() === 'flow') {
-      iframe.contentWindow?.scrollTo({ top: this.proseScrollY, behavior: 'instant' });
-      this.proseReloading.set(false);
+    if (this.store.documentType() === 'slides' || (this.store.documentType() === 'prose' && this.store.proseViewMode() === 'flow')) {
+      if (this.store.documentType() === 'prose') {
+        iframe.contentWindow?.scrollTo({ top: this.proseScrollY, behavior: 'instant' });
+      }
+      this.isPreviewLoading.set(false);
       clearTimeout(this.reloadingTimeout);
     }
   }

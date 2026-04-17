@@ -3,7 +3,7 @@
     <iframe
       #previewFrame
       class="slide-frame"
-      [class.reloading]="proseReloading()"
+      [class.reloading]="isPreviewLoading()"
       title="Slide preview"
       (load)="onFrameLoad()"
     ></iframe>
