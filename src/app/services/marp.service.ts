@@ -202,8 +202,15 @@ ${mermaidTag}
   }, false);
 
   window.addEventListener('message', function (e) {
-    if (e.data && typeof e.data.slideIndex === 'number') show(e.data.slideIndex);
+    if (e.data && typeof e.data.slideIndex === 'number') {
+      show(e.data.slideIndex).then(function(idx) {
+        window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'slideChanged', slideIndex: idx }, '*');
+      });
+    }
   });
+
+  // Signal that we are ready to receive messages
+  window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'ready' }, '*');
 })();
 </script>
 ${linkHandlerScript}`;

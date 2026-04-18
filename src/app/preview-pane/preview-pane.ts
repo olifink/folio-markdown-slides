@@ -50,6 +50,7 @@ export class PreviewPaneComponent {
    */
   private readonly isVisible = signal(document.visibilityState === 'visible');
   private readonly refreshTrigger = signal(0);
+  private readonly isFrameReady = signal(false);
 
   /**
    * First emission is immediate (no debounce) so the preview populates on load.
@@ -134,6 +135,7 @@ export class PreviewPaneComponent {
 
       // Hide the iframe during reload to prevent flicker/jump
       this.isPreviewLoading.set(true);
+      this.isFrameReady.set(false);
 
       if (result.type === 'slides') {
         this.store.setSlideCount(result.slideCount);
@@ -163,14 +165,7 @@ export class PreviewPaneComponent {
 
     // Scroll to current slide (only relevant for slides mode)
     effect(() => {
-      if (this.store.documentType() !== 'slides') return;
-      const idx = this.store.currentSlideIndex();
-      this.iframeRef()?.nativeElement.contentWindow?.postMessage({ folioIdentifier: 'folio-preview', slideIndex: idx }, '*');
-    });
-
-    // Re-sync slide position when the tab becomes visible after being hidden
-    effect(() => {
-      if (!this.active() || this.store.documentType() !== 'slides') return;
+      if (this.store.documentType() !== 'slides' || !this.active() || !this.isFrameReady()) return;
       const idx = this.store.currentSlideIndex();
       this.iframeRef()?.nativeElement.contentWindow?.postMessage({ folioIdentifier: 'folio-preview', slideIndex: idx }, '*');
     });
@@ -182,6 +177,12 @@ export class PreviewPaneComponent {
         const iframe = this.iframeRef()?.nativeElement;
         const isFromOurIframe = e.source === iframe?.contentWindow || e.data?.folioIdentifier === 'folio-preview';
         if (!isFromOurIframe) return;
+
+        if (e.data?.type === 'ready') {
+          this.isFrameReady.set(true);
+          this.isPreviewLoading.set(false);
+          clearTimeout(this.reloadingTimeout);
+        }
 
         if (e.data?.type === 'tabSwitch') {
           if (e.data.direction === 'prev') {

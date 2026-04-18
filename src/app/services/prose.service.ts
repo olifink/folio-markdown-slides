@@ -196,6 +196,7 @@ export class ProseService {
     var total = (flow && typeof flow.total === 'number') ? flow.total : 1;
     requestAnimationFrame(function() {
       window.parent.postMessage({ folioIdentifier: 'folio-preview', pageCount: total }, '*');
+    window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'ready' }, '*');
     });
   }
 };
@@ -236,6 +237,7 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   // Inform parent that we are loaded even in flow mode
   window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'flowLoaded' }, '*');
+  window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'ready' }, '*');
 });
 </script>
 ${linkHandlerScript}`;
