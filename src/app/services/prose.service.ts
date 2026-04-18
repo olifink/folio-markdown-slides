@@ -257,12 +257,17 @@ ${linkHandlerScript}`;
   body { background: ${isExport ? 'var(--prose-bg)' : 'var(--prose-canvas)'}; }
   .markdown-body { background: var(--prose-bg); }
 
+  .pagedjs_page, .pagedjs_sheet, .pagedjs_pagebox, .pagedjs_area {
+    background: var(--prose-bg) !important;
+    color: var(--prose-text) !important;
+  }
+
   .pagedjs_page {
-    background: var(--prose-bg);
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     margin: 0 auto 24px;
+    border: 1px solid var(--prose-border);
   }
-  ${isExport ? '.pagedjs_page { box-shadow: none; margin: 0; }' : ''}
+  ${isExport ? '.pagedjs_page { box-shadow: none; margin: 0; border: none; }' : ''}
 ` : `
   body {
     background: var(--prose-bg);
