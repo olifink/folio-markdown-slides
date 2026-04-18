@@ -129,7 +129,7 @@ export class AppStore {
     }
   }
 
-  async createFile(filename: string, content: string = SAMPLE_PROSE, isSlides: boolean = false): Promise<void> {
+  async createFile(filename: string, content: string = SAMPLE_PROSE, isSlides: boolean = false): Promise<string> {
     let finalName = filename;
     const suffix = isSlides ? '.slides.md' : '.md';
 
@@ -156,6 +156,7 @@ export class AppStore {
     await this.fs.writeFile(finalName, content);
     await this.refreshList();
     await this.openFile(finalName);
+    return finalName;
   }
 
   async openFile(filename: string): Promise<void> {

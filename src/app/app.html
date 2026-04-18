@@ -1,6 +1,6 @@
 <mat-drawer-container class="app-container">
   <mat-drawer #drawer mode="over" class="file-drawer">
-    <app-file-list-drawer></app-file-list-drawer>
+    <app-file-list-drawer (closeDrawer)="drawer.close()"></app-file-list-drawer>
   </mat-drawer>
 
   <mat-drawer-content class="app-content">

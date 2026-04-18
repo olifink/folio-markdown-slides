@@ -62,6 +62,10 @@ export class EditorPaneComponent {
       }
     });
 
+    this.editorService.focus$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.editorView?.focus();
+    });
+
     effect(() => {
       const md = this.store.currentMarkdown();
       const view = this.editorView;
