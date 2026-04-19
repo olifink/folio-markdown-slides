@@ -201,7 +201,8 @@
 .tab-group {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   touch-action: pan-y; // allow custom horizontal swipes, keep vertical scroll
 

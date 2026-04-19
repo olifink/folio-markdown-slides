@@ -163,7 +163,7 @@ export class PreviewPaneComponent {
             this.isFrameReady.set(true);
           }
         }
-      }, 1000);
+      }, 500);
 
       iframe.nativeElement.srcdoc = nextSrcdoc;
     });
