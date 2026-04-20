@@ -17,8 +17,10 @@ import { EditorPaneComponent } from './editor-pane/editor-pane';
 import { PreviewPaneComponent } from './preview-pane/preview-pane';
 import { FileListDrawerComponent } from './file-list-drawer/file-list-drawer';
 import { HelpDialogComponent } from './help-dialog/help-dialog';
+import { SafariWarningDialogComponent } from './safari-warning-dialog/safari-warning-dialog';
 import { AppStore } from './store/app-store';
 import { ExportService } from './services/export.service';
+import { shouldShowApplePlatformWarning } from './services/platform-warning';
 
 const COLOR_SCHEME_ICON: Record<string, string> = {
   system: 'brightness_auto',
@@ -67,6 +69,7 @@ export class App {
   private readonly snackBar = inject(MatSnackBar);
   private readonly exportService = inject(ExportService);
   private readonly dialog = inject(MatDialog);
+  private readonly shouldShowSafariWarning = shouldShowApplePlatformWarning;
 
   readonly isWide = toSignal(
     this.breakpointObserver.observe('(min-width: 840px)').pipe(
@@ -219,8 +222,25 @@ export class App {
     });
   }
 
+  private maybeShowSafariWarning(): void {
+    if (this.store.prefs().safariWarningDismissed || !this.shouldShowSafariWarning()) {
+      return;
+    }
+
+    this.dialog.open(SafariWarningDialogComponent, {
+      width: 'min(92vw, 560px)',
+      maxWidth: '560px',
+      panelClass: 'folio-warning-dialog',
+      autoFocus: false,
+    }).afterClosed().subscribe(() => {
+      this.store.dismissSafariWarning();
+    });
+  }
+
   constructor() {
-    this.store.init();
+    void this.store.init().then(() => {
+      this.maybeShowSafariWarning();
+    });
 
     // Focus input when editing starts
     effect(() => {

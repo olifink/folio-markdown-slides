@@ -1,0 +1,32 @@
+.dialog-header {
+  padding: 20px 24px 0;
+}
+
+.dialog-header__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  mat-icon {
+    color: #b26a00;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
+mat-dialog-content {
+  padding: 12px 24px 0 !important;
+
+  p {
+    margin: 0 0 12px;
+    line-height: 1.55;
+  }
+}
+
+mat-dialog-actions {
+  padding: 8px 24px 20px;
+}

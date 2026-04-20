@@ -8,6 +8,7 @@ export interface AppPrefs {
   fontFamily: 'sans-serif' | 'serif';
   editorFontSize: number;
   darkMode: 'system' | 'light' | 'dark';
+  safariWarningDismissed: boolean;
 }
 
 const DEFAULT_PREFS: AppPrefs = {
@@ -18,6 +19,7 @@ const DEFAULT_PREFS: AppPrefs = {
   fontFamily: 'sans-serif',
   editorFontSize: 16,
   darkMode: 'system',
+  safariWarningDismissed: false,
 };
 
 @Injectable({ providedIn: 'root' })

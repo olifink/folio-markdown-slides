@@ -90,6 +90,7 @@ export class AppStore {
     fontFamily: 'sans-serif',
     editorFontSize: 16,
     darkMode: 'system',
+    safariWarningDismissed: false,
   });
 
   readonly selectedTab = signal(0);
@@ -264,6 +265,14 @@ export class AppStore {
 
   togglePreview(): void {
     this.previewVisible.update(v => !v);
+  }
+
+  dismissSafariWarning(): void {
+    if (this.prefs().safariWarningDismissed) {
+      return;
+    }
+
+    this.updatePrefs({ safariWarningDismissed: true });
   }
 
   private updatePrefs(patch: Partial<AppPrefs>): void {

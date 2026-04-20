@@ -255,7 +255,8 @@ body {
 // ── Help Dialog ──────────────────────────────────────────────────────────────
 
 .folio-help-dialog,
-.folio-settings-dialog {
+.folio-settings-dialog,
+.folio-warning-dialog {
   .mat-mdc-dialog-container {
     --mdc-dialog-container-shape: 28px;
 
