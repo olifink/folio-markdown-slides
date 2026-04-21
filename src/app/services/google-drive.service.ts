@@ -45,25 +45,17 @@ export class GoogleDriveService {
 
   /**
    * Request an access token from the user.
-   * This will open a popup window for the user to select their account and grant permission,
-   * unless silent is true, in which case it will attempt to get a token without user interaction.
+   * @param prompt - 'none' for silent refresh (no popup), '' for default popup.
    */
-  async login(silent: boolean = false): Promise<{ token: string, expires_in: number }> {
+  async login(prompt: 'none' | '' = ''): Promise<{ token: string, expires_in: number }> {
     return new Promise((resolve, reject) => {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: this.CLIENT_ID,
         scope: this.SCOPE,
-        prompt: silent ? 'none' : '',
+        prompt: prompt,
         callback: (response: google.accounts.oauth2.TokenResponse) => {
           if (response.error) {
-            if (silent && (response.error === 'interaction_required' || response.error === 'immediate_failed')) {
-              // If silent login fails due to interaction being required, 
-              // we proceed to an interactive login (only if not backgroundSync, but service doesn't know context)
-              // Actually, backgroundSync in store handles this by not calling login(true) directly if it wants to be truly silent.
-              this.login(false).then(resolve).catch(reject);
-            } else {
-              reject(response);
-            }
+            reject(response);
           } else {
             this.accessToken.set(response.access_token);
             resolve({

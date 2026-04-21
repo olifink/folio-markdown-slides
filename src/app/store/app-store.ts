@@ -204,21 +204,24 @@ export class AppStore {
   }
 
   async syncNow(): Promise<void> {
-    if (!this.drive.isConnected) {
-      try {
-        const result = await this.drive.login(true);
-        this.updatePrefs({
-          googleDriveToken: result.token,
-          googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
-        });
-      } catch (e) {
-        console.error('Failed to re-authenticate with Google Drive', e);
-        this.syncStatus.set('error');
-        return;
-      }
-    }
-
     try {
+      if (!this.drive.isConnected) {
+        // Try silent refresh first
+        try {
+          const result = await this.drive.login('none');
+          this.updatePrefs({
+            googleDriveToken: result.token,
+            googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+          });
+        } catch {
+          // Fallback to interactive
+          const result = await this.drive.login('');
+          this.updatePrefs({
+            googleDriveToken: result.token,
+            googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+          });
+        }
+      }
       await this.performSync();
     } catch (e) {
       console.error('Manual sync failed', e);
@@ -241,7 +244,6 @@ export class AppStore {
 
   /**
    * Attempts a silent sync in the background.
-   * Unlike syncNow, it will not trigger an interactive login if silent refresh fails.
    */
   private async backgroundSync(): Promise<void> {
     if (this.autoSyncTimer) clearTimeout(this.autoSyncTimer);
@@ -250,40 +252,10 @@ export class AppStore {
     if (!current) return;
 
     try {
-      if (!this.drive.isConnected) {
-        // Attempt truly silent refresh (no fallback to interactive login)
-        // We use the underlying GIS directly for a non-blocking check
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: (this.drive as any).CLIENT_ID,
-          scope: (this.drive as any).SCOPE,
-          prompt: 'none',
-          callback: async (response: google.accounts.oauth2.TokenResponse) => {
-            if (!response.error) {
-              this.drive.setToken(response.access_token);
-              this.updatePrefs({
-                googleDriveToken: response.access_token,
-                googleDriveTokenExpiresAt: Date.now() + (parseInt(response.expires_in) * 1000)
-              });
-              // Proceed with focused sync if token was refreshed
-              await this.performSync(current);
-            } else {
-              // Reset status if callback returns with error
-              if (this.syncStatus() === 'syncing') {
-                this.syncStatus.set('idle');
-              }
-            }
-          }
-        });
-        client.requestAccessToken();
-      } else {
-        await this.performSync(current);
-      }
+      await this.performSync(current);
     } catch (e) {
       // Background sync failures are silent by design
       console.log('[Sync] Background sync skipped or failed', e);
-      if (this.syncStatus() === 'syncing') {
-        this.syncStatus.set('idle');
-      }
     }
   }
 
@@ -396,25 +368,25 @@ export class AppStore {
       }
     } catch (e) {
       if (e instanceof UnauthorizedError && !isRetry) {
-        console.log('[Sync] Unauthorized, attempting re-auth...');
+        console.log('[Sync] Unauthorized, attempting silent re-auth...');
         try {
-          const result = await this.drive.login(true);
+          const result = await this.drive.login('none');
           this.updatePrefs({
             googleDriveToken: result.token,
             googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
           });
           return await this.performSync(targetFile, true);
         } catch (authError) {
-          console.error('[Sync] Re-auth failed', authError);
-          this.syncStatus.set('error');
-          throw e;
+          console.log('[Sync] Silent re-auth failed, session truly expired');
+          this.syncStatus.set('idle');
+          // We don't throw here to avoid console noise for background syncs.
+          // Manual syncNow handles the interactive fallback.
+          return;
         }
       }
       throw e;
     } finally {
-      if (!isRetry || this.syncStatus() !== 'syncing') {
-        this.syncStatus.set('idle');
-      }
+      this.syncStatus.set('idle');
     }
   }
 
