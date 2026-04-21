@@ -95,6 +95,8 @@ export class AppStore {
     safariWarningDismissed: false,
     googleDriveFolderId: null,
     googleDriveSyncEnabled: false,
+    googleDriveToken: null,
+    googleDriveTokenExpiresAt: null,
     lastSyncTime: null,
   });
 
@@ -127,6 +129,13 @@ export class AppStore {
     this.prefs.set(prefs);
     this.selectedTab.set(prefs.lastTab);
 
+    // Initialize Drive connection from persisted token if valid
+    if (prefs.googleDriveToken && prefs.googleDriveTokenExpiresAt) {
+      if (Date.now() < prefs.googleDriveTokenExpiresAt) {
+        this.drive.setToken(prefs.googleDriveToken);
+      }
+    }
+
     await this.refreshList();
     const list = this.fileList();
 
@@ -141,9 +150,14 @@ export class AppStore {
 
   async connectDrive(): Promise<void> {
     try {
-      await this.drive.login();
+      const result = await this.drive.login();
       const folderId = await this.drive.getOrCreateFolder();
-      this.updatePrefs({ googleDriveFolderId: folderId, googleDriveSyncEnabled: true });
+      this.updatePrefs({ 
+        googleDriveFolderId: folderId, 
+        googleDriveSyncEnabled: true,
+        googleDriveToken: result.token,
+        googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+      });
     } catch (e) {
       console.error('Failed to connect to Google Drive', e);
       this.syncStatus.set('error');
@@ -155,6 +169,8 @@ export class AppStore {
     this.updatePrefs({
       googleDriveFolderId: null,
       googleDriveSyncEnabled: false,
+      googleDriveToken: null,
+      googleDriveTokenExpiresAt: null,
       lastSyncTime: null,
     });
     // Remove manifest
@@ -169,7 +185,17 @@ export class AppStore {
 
   async syncNow(): Promise<void> {
     if (!this.drive.isConnected) {
-      await this.drive.login(true);
+      try {
+        const result = await this.drive.login(true);
+        this.updatePrefs({
+          googleDriveToken: result.token,
+          googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+        });
+      } catch (e) {
+        console.error('Failed to re-authenticate with Google Drive', e);
+        this.syncStatus.set('error');
+        return;
+      }
     }
 
     this.syncStatus.set('syncing');

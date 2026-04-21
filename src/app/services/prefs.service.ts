@@ -11,6 +11,8 @@ export interface AppPrefs {
   safariWarningDismissed: boolean;
   googleDriveFolderId: string | null;
   googleDriveSyncEnabled: boolean;
+  googleDriveToken: string | null;
+  googleDriveTokenExpiresAt: number | null;
   lastSyncTime: number | null;
 }
 
@@ -25,6 +27,8 @@ const DEFAULT_PREFS: AppPrefs = {
   safariWarningDismissed: false,
   googleDriveFolderId: null,
   googleDriveSyncEnabled: false,
+  googleDriveToken: null,
+  googleDriveTokenExpiresAt: null,
   lastSyncTime: null,
 };
 

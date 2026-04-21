@@ -17,15 +17,15 @@ export class GoogleDriveService {
    * This will open a popup window for the user to select their account and grant permission,
    * unless silent is true, in which case it will attempt to get a token without user interaction.
    */
-  async login(silent: boolean = false): Promise<string> {
+  async login(silent: boolean = false): Promise<{ token: string, expires_in: number }> {
     return new Promise((resolve, reject) => {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: this.CLIENT_ID,
         scope: this.SCOPE,
-        hint: silent ? 'none' : undefined,
+        prompt: silent ? 'none' : '',
         callback: (response: google.accounts.oauth2.TokenResponse) => {
           if (response.error) {
-            if (silent && response.error === 'interaction_required') {
+            if (silent && (response.error === 'interaction_required' || response.error === 'immediate_failed')) {
               // If silent login fails due to interaction being required, 
               // we proceed to an interactive login
               this.login(false).then(resolve).catch(reject);
@@ -34,12 +34,19 @@ export class GoogleDriveService {
             }
           } else {
             this.accessToken.set(response.access_token);
-            resolve(response.access_token);
+            resolve({
+              token: response.access_token,
+              expires_in: parseInt(response.expires_in)
+            });
           }
         },
       });
       client.requestAccessToken();
     });
+  }
+
+  setToken(token: string | null) {
+    this.accessToken.set(token);
   }
 
   logout() {
@@ -51,14 +58,14 @@ export class GoogleDriveService {
   }
 
   /**
-   * Find or create the app-specific folder "Folio"
+   * Find or create the app-specific folder "Folio Markdown"
    */
   async getOrCreateFolder(): Promise<string> {
     const token = this.accessToken();
     if (!token) throw new Error('Not authenticated');
 
     // Search for existing folder
-    const query = encodeURIComponent("name = 'Folio' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+    const query = encodeURIComponent("name = 'Folio Markdown' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
     const searchResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id)`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -76,7 +83,7 @@ export class GoogleDriveService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: 'Folio',
+        name: 'Folio Markdown',
         mimeType: 'application/vnd.google-apps.folder'
       })
     });
