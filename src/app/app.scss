@@ -121,7 +121,8 @@ mat-drawer-content.app-content {
 }
 
 @keyframes spin {
-  100% { transform: rotate(360deg); }
+  0% { transform: rotate(360deg); }
+  100% { transform: rotate(0deg); }
 }
 
 .toolbar__prose-toggle {
