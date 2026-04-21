@@ -76,7 +76,7 @@
         <mat-icon>cloud_queue</mat-icon>
         <span>Google Drive</span>
       </div>
-      @if (!store.driveConnected()) {
+      @if (!store.driveEnabled()) {
       <button mat-stroked-button (click)="store.connectDrive()">
         <mat-icon>login</mat-icon>
         Connect
@@ -86,6 +86,10 @@
         <button mat-flat-button color="primary" [disabled]="store.syncStatus() === 'syncing'" (click)="store.syncNow()">
           <mat-icon [class.spinning]="store.syncStatus() === 'syncing'">sync</mat-icon>
           <span>{{ store.syncStatus() === 'syncing' ? 'Syncing...' : 'Sync Now' }}</span>
+        </button>
+        <button mat-icon-button (click)="store.disconnectDrive()" matTooltip="Disconnect Google Drive"
+          [disabled]="store.syncStatus() === 'syncing'">
+          <mat-icon>logout</mat-icon>
         </button>
       </div>
       }

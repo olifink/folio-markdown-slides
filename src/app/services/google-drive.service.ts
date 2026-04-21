@@ -14,16 +14,24 @@ export class GoogleDriveService {
 
   /**
    * Request an access token from the user.
-   * This will open a popup window for the user to select their account and grant permission.
+   * This will open a popup window for the user to select their account and grant permission,
+   * unless silent is true, in which case it will attempt to get a token without user interaction.
    */
-  async login(): Promise<string> {
+  async login(silent: boolean = false): Promise<string> {
     return new Promise((resolve, reject) => {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: this.CLIENT_ID,
         scope: this.SCOPE,
+        hint: silent ? 'none' : undefined,
         callback: (response: google.accounts.oauth2.TokenResponse) => {
           if (response.error) {
-            reject(response);
+            if (silent && response.error === 'interaction_required') {
+              // If silent login fails due to interaction being required, 
+              // we proceed to an interactive login
+              this.login(false).then(resolve).catch(reject);
+            } else {
+              reject(response);
+            }
           } else {
             this.accessToken.set(response.access_token);
             resolve(response.access_token);

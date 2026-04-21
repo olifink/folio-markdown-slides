@@ -45,6 +45,15 @@
 
       <span class="toolbar__spacer"></span>
 
+      @if (store.driveEnabled()) {
+        <button mat-icon-button (click)="store.syncNow()" 
+          [disabled]="store.syncStatus() === 'syncing'"
+          [matTooltip]="store.syncStatus() === 'syncing' ? 'Syncing...' : 'Sync with Google Drive'" 
+          aria-label="Sync with Google Drive">
+          <mat-icon [class.spinning]="store.syncStatus() === 'syncing'">sync</mat-icon>
+        </button>
+      }
+
       <button mat-icon-button [matMenuTriggerFor]="exportMenu" aria-label="Export document" matTooltip="Export">
         <mat-icon>download</mat-icon>
       </button>

@@ -107,6 +107,7 @@ export class AppStore {
 
   readonly syncStatus = signal<'idle' | 'syncing' | 'error'>('idle');
   readonly driveConnected = computed(() => this.drive.isConnected);
+  readonly driveEnabled = computed(() => this.prefs().googleDriveSyncEnabled);
 
   constructor() {
     // Auto-save effect
@@ -149,9 +150,26 @@ export class AppStore {
     }
   }
 
+  async disconnectDrive(): Promise<void> {
+    this.drive.logout();
+    this.updatePrefs({
+      googleDriveFolderId: null,
+      googleDriveSyncEnabled: false,
+      lastSyncTime: null,
+    });
+    // Remove manifest
+    try {
+      if (await this.fs.exists('.sync-manifest.json')) {
+        await this.fs.deleteFile('.sync-manifest.json');
+      }
+    } catch (e) {
+      console.warn('Failed to delete sync manifest', e);
+    }
+  }
+
   async syncNow(): Promise<void> {
     if (!this.drive.isConnected) {
-      await this.drive.login();
+      await this.drive.login(true);
     }
 
     this.syncStatus.set('syncing');

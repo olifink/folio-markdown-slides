@@ -116,6 +116,14 @@ mat-drawer-content.app-content {
   flex: 1;
 }
 
+.spinning {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
 .toolbar__prose-toggle {
   height: 32px;
 
