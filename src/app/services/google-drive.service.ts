@@ -7,9 +7,9 @@ import { Injectable, signal } from '@angular/core';
 @Injectable({ providedIn: 'root' })
 export class GoogleDriveService {
   // Replace this with your actual Client ID from Google Cloud Console
-  private readonly CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
+  private readonly CLIENT_ID = '185869293882-nt5ksu73r61t0djh2t9onstikmr8fqc3.apps.googleusercontent.com';
   private readonly SCOPE = 'https://www.googleapis.com/auth/drive.file';
-  
+
   private accessToken = signal<string | null>(null);
 
   /**
@@ -43,14 +43,14 @@ export class GoogleDriveService {
   }
 
   /**
-   * Find or create the app-specific folder "Folio Slides"
+   * Find or create the app-specific folder "Folio"
    */
   async getOrCreateFolder(): Promise<string> {
     const token = this.accessToken();
     if (!token) throw new Error('Not authenticated');
 
     // Search for existing folder
-    const query = encodeURIComponent("name = 'Folio Slides' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
+    const query = encodeURIComponent("name = 'Folio' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
     const searchResponse = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id)`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -68,7 +68,7 @@ export class GoogleDriveService {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: 'Folio Slides',
+        name: 'Folio',
         mimeType: 'application/vnd.google-apps.folder'
       })
     });
@@ -94,7 +94,7 @@ export class GoogleDriveService {
    */
   async uploadFile(name: string, content: string, folderId: string, fileId?: string): Promise<string> {
     const token = this.accessToken();
-    
+
     const metadata = {
       name,
       mimeType: 'text/markdown',
@@ -105,10 +105,10 @@ export class GoogleDriveService {
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', new Blob([content], { type: 'text/markdown' }));
 
-    const url = fileId 
+    const url = fileId
       ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
       : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-    
+
     const method = fileId ? 'PATCH' : 'POST';
 
     const response = await fetch(url, {
