@@ -331,6 +331,12 @@ export class AppStore {
             const content = await this.drive.downloadFile(driveId);
             await this.fs.writeFile(filename, content);
             nextManifest[filename] = driveId;
+
+            // If the current file was updated, refresh the view
+            if (filename === this.currentFile()) {
+              this.currentMarkdown.set(content);
+              this.isDirty.set(false);
+            }
           } else {
             nextManifest[filename] = driveId;
           }
@@ -350,6 +356,11 @@ export class AppStore {
           const content = await this.drive.downloadFile(remoteFile.id);
           await this.fs.writeFile(filename, content);
           nextManifest[filename] = remoteFile.id;
+
+          if (filename === this.currentFile()) {
+            this.currentMarkdown.set(content);
+            this.isDirty.set(false);
+          }
         }
       }
 

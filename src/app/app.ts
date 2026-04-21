@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { CdkDrag, CdkDragMove } from '@angular/cdk/drag-drop';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
+import { map, startWith } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatIconModule } from '@angular/material/icon';
