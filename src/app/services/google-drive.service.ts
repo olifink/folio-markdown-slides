@@ -139,4 +139,15 @@ export class GoogleDriveService {
     });
     return response.text();
   }
+
+  /**
+   * Delete a file from Drive
+   */
+  async deleteFile(fileId: string): Promise<void> {
+    const token = this.accessToken();
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  }
 }

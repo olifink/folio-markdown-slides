@@ -52,4 +52,13 @@ export class FsService {
       return false;
     }
   }
+
+  async getFileStats(filename: string): Promise<{ mtimeMs: number } | null> {
+    try {
+      const stats = await this.promises.stat(`/documents/${filename}`);
+      return { mtimeMs: stats.mtimeMs };
+    } catch {
+      return null;
+    }
+  }
 }

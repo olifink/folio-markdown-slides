@@ -179,7 +179,7 @@ export class AppStore {
         this.updatePrefs({ googleDriveFolderId: folderId });
       }
 
-      // Load manifest
+      // 1. Load data
       let manifest: Record<string, string> = {};
       try {
         if (await this.fs.exists('.sync-manifest.json')) {
@@ -192,31 +192,85 @@ export class AppStore {
       const localFiles = await this.fs.listFiles();
       const remoteFiles = await this.drive.listFiles(folderId);
       const remoteMap = new Map(remoteFiles.map((f) => [f.name, f]));
+      const nextManifest: Record<string, string> = {};
 
-      // 1. Upload local files to Drive
-      for (const filename of localFiles) {
-        const content = await this.fs.readFile(filename);
-        const remoteFile = remoteMap.get(filename);
-        const driveId = manifest[filename] || remoteFile?.id;
+      // 2. Deletion Sync (using manifest as the "last known state")
+      for (const [filename, driveId] of Object.entries(manifest)) {
+        const isLocal = localFiles.includes(filename);
+        const isRemote = remoteMap.has(filename);
 
-        const newDriveId = await this.drive.uploadFile(filename, content, folderId, driveId);
-        manifest[filename] = newDriveId;
-      }
-
-      // 2. Download remote files that aren't local
-      for (const remoteFile of remoteFiles) {
-        if (!localFiles.includes(remoteFile.name)) {
-          const content = await this.drive.downloadFile(remoteFile.id);
-          // We don't want to trigger auto-save during sync
-          await this.fs.writeFile(remoteFile.name, content);
-          manifest[remoteFile.name] = remoteFile.id;
+        if (!isLocal && isRemote) {
+          // Deleted locally since last sync -> Delete from Drive
+          console.log(`[Sync] Deleting remote file: ${filename}`);
+          await this.drive.deleteFile(driveId);
+          remoteMap.delete(filename);
+        } else if (isLocal && !isRemote) {
+          // Deleted remotely since last sync -> Delete locally
+          console.log(`[Sync] Deleting local file: ${filename}`);
+          await this.fs.deleteFile(filename);
+          // Remove from our local processing list
+          localFiles.splice(localFiles.indexOf(filename), 1);
         }
       }
 
-      // Save manifest
-      await this.fs.writeFile('.sync-manifest.json', JSON.stringify(manifest));
+      // 3. Update / Create Sync
+      // Process local files (Upload if newer or new)
+      for (const filename of localFiles) {
+        const localStats = await this.fs.getFileStats(filename);
+        const remoteFile = remoteMap.get(filename);
+        const localMtime = localStats?.mtimeMs || 0;
+
+        if (remoteFile) {
+          const remoteMtime = new Date(remoteFile.modifiedTime).getTime();
+          const driveId = remoteFile.id;
+
+          // Add a 2s buffer for timestamp comparisons to handle precision differences
+          if (localMtime > remoteMtime + 2000) {
+            console.log(`[Sync] Uploading newer local: ${filename}`);
+            const content = await this.fs.readFile(filename);
+            const newId = await this.drive.uploadFile(filename, content, folderId, driveId);
+            nextManifest[filename] = newId;
+          } else if (remoteMtime > localMtime + 2000) {
+            console.log(`[Sync] Downloading newer remote: ${filename}`);
+            const content = await this.drive.downloadFile(driveId);
+            await this.fs.writeFile(filename, content);
+            nextManifest[filename] = driveId;
+          } else {
+            // Already in sync
+            nextManifest[filename] = driveId;
+          }
+          // Remove from remote map so we know what's left
+          remoteMap.delete(filename);
+        } else {
+          // New local file (not in remoteMap)
+          console.log(`[Sync] Uploading new file: ${filename}`);
+          const content = await this.fs.readFile(filename);
+          const driveId = await this.drive.uploadFile(filename, content, folderId);
+          nextManifest[filename] = driveId;
+        }
+      }
+
+      // Process remaining remote files (New files from other devices)
+      for (const [filename, remoteFile] of remoteMap.entries()) {
+        console.log(`[Sync] Downloading new remote: ${filename}`);
+        const content = await this.drive.downloadFile(remoteFile.id);
+        await this.fs.writeFile(filename, content);
+        nextManifest[filename] = remoteFile.id;
+      }
+
+      // 4. Cleanup & Save
+      await this.fs.writeFile('.sync-manifest.json', JSON.stringify(nextManifest));
       this.updatePrefs({ lastSyncTime: Date.now() });
       await this.refreshList();
+      
+      // If we deleted the current file, we might need to update the UI
+      if (this.currentFile() && !nextManifest[this.currentFile()!]) {
+        const list = this.fileList();
+        if (list.length > 0) {
+          await this.openFile(list[0]);
+        }
+      }
+
       this.syncStatus.set('idle');
     } catch (e) {
       console.error('Sync failed', e);
