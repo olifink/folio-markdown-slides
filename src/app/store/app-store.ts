@@ -185,47 +185,38 @@ export class AppStore {
   }
 
   async syncNow(): Promise<void> {
-    const lastError = this.prefs().lastSyncError || '';
-    const needsInteraction = lastError.includes('interaction_required') || lastError.includes('immediate_failed');
-    
     this.updatePrefs({ lastSyncError: null });
     this.syncStatus.set('syncing');
 
     const expiresAt = this.prefs().googleDriveTokenExpiresAt;
-    const isExpired = expiresAt && Date.now() > (expiresAt - 60000); // 1 minute buffer
+    const isExpired = expiresAt && Date.now() > (expiresAt - 60000);
+    const lastError = this.prefs().lastSyncError || '';
+    const needsInteraction = lastError.includes('interaction_required') || lastError.includes('immediate_failed');
 
     try {
+      // For manual sync, if we're not connected or expired, go straight to re-auth.
+      // We skip the silent refresh attempt here because on mobile it often causes the 
+      // subsequent interactive popup to be blocked by the browser's popup blocker
+      // (as the user gesture context is lost during the silent await).
       if (!this.drive.isConnected || isExpired || needsInteraction) {
-        console.log('[Sync] Token missing, expired, or interaction required. Refreshing...');
+        console.log('[Sync] Token missing, expired, or interaction required. Triggering popup...');
         
-        let result: { token: string, expires_in: number } | null = null;
+        const result = await this.drive.login(''); // Trigger interactive popup immediately
         
-        // On mobile, if we know we need interaction, skip silent refresh 
-        // to preserve the user gesture context for the interactive popup.
-        if (!needsInteraction) {
-          try {
-            result = await this.drive.login('none');
-          } catch {
-            console.log('[Sync] Silent refresh failed, falling back to popup');
-          }
-        }
-
-        if (!result) {
-          result = await this.drive.login('');
-        }
-
         this.updatePrefs({
           googleDriveToken: result.token,
           googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000),
           lastSyncError: null
         });
       }
+      
       await this.performSync();
     } catch (e: any) {
       console.error('Manual sync failed', e);
       this.syncStatus.set('error');
+      
       const msg = e.error_description || e.error || e.message || 'Unknown error';
-      this.drive.logout(); // Clear internal signal
+      this.drive.logout();
       this.updatePrefs({ 
         googleDriveToken: null,
         googleDriveTokenExpiresAt: null,
@@ -252,9 +243,6 @@ export class AppStore {
    * Otherwise, a full sync including deletions is performed.
    */
   private async performSync(targetFile?: string, isRetry = false): Promise<void> {
-    if (this.syncStatus() === 'syncing' && !isRetry) return;
-    
-    this.syncStatus.set('syncing');
     try {
       const folderId = this.prefs().googleDriveFolderId || (await this.drive.getOrCreateFolder());
       if (!this.prefs().googleDriveFolderId) {
