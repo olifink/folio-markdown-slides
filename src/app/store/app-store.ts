@@ -98,6 +98,7 @@ export class AppStore {
     googleDriveToken: null,
     googleDriveTokenExpiresAt: null,
     lastSyncTime: null,
+    lastSyncError: null,
   });
 
   readonly selectedTab = signal(0);
@@ -387,14 +388,16 @@ export class AppStore {
             googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
           });
           return await this.performSync(targetFile, true);
-        } catch (authError) {
+        } catch (authError: any) {
           console.log('[Sync] Silent re-auth failed, session truly expired');
           this.syncStatus.set('idle');
+          this.updatePrefs({ lastSyncError: authError.message || 'Session expired' });
           // We don't throw here to avoid console noise for background syncs.
           // Manual syncNow handles the interactive fallback.
           return;
         }
       }
+      this.updatePrefs({ lastSyncError: (e as any).message || 'Sync error' });
       throw e;
     } finally {
       this.syncStatus.set('idle');

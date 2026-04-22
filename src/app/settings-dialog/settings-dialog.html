@@ -102,10 +102,10 @@
     </div>
     }
 
-    @if (store.syncStatus() === 'error') {
+    @if (store.syncStatus() === 'error' || store.prefs().lastSyncError) {
     <div class="setting-error">
       <mat-icon>error_outline</mat-icon>
-      <span>Sync failed. Please try connecting again.</span>
+      <span>{{ store.prefs().lastSyncError || 'Sync failed. Please try connecting again.' }}</span>
     </div>
     }
   </section>
