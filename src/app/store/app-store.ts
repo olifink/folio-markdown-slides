@@ -209,6 +209,8 @@ export class AppStore {
     const needsInteraction = lastError.includes('interaction_required') || lastError.includes('immediate_failed');
     
     this.updatePrefs({ lastSyncError: null });
+    this.syncStatus.set('syncing');
+
     const expiresAt = this.prefs().googleDriveTokenExpiresAt;
     const isExpired = expiresAt && Date.now() > (expiresAt - 60000); // 1 minute buffer
 
@@ -243,11 +245,16 @@ export class AppStore {
       console.error('Manual sync failed', e);
       this.syncStatus.set('error');
       const msg = e.error_description || e.error || e.message || 'Unknown error';
+      this.drive.logout(); // Clear internal signal
       this.updatePrefs({ 
         googleDriveToken: null,
         googleDriveTokenExpiresAt: null,
-        lastSyncError: `Sync failed: ${msg}` 
+        lastSyncError: `Sync failed: ${msg}. Click 'Sync Now' to reconnect.` 
       });
+    } finally {
+      if (this.syncStatus() === 'syncing') {
+        this.syncStatus.set('idle');
+      }
     }
   }
 
@@ -260,7 +267,7 @@ export class AppStore {
 
     // Trigger silent background sync if Drive is enabled
     if (this.driveEnabled()) {
-      this.backgroundSync();
+      void this.backgroundSync();
     }
   }
 
@@ -388,6 +395,7 @@ export class AppStore {
 
       // 5. Cleanup & Save
       await this.fs.writeFile('.sync-manifest.json', JSON.stringify(nextManifest));
+      this.updatePrefs({ lastSyncError: null });
       if (!targetFile) {
         this.updatePrefs({ lastSyncTime: Date.now() });
       }
@@ -412,20 +420,14 @@ export class AppStore {
         } catch (authError: any) {
           const msg = authError.error_description || authError.error || 'Session expired';
           console.log('[Sync] Silent re-auth failed:', msg);
-          this.syncStatus.set('idle');
-          this.updatePrefs({ 
-            googleDriveToken: null,
-            googleDriveTokenExpiresAt: null,
-            lastSyncError: `Session expired: ${msg}. Click 'Sync Now' to reconnect.` 
-          });
-          return;
+          throw authError; // Rethrow to let caller (syncNow) handle state reset
         }
       }
-      const finalMsg = (e as any).error_description || (e as any).error || (e as any).message || 'Sync error';
-      this.updatePrefs({ lastSyncError: finalMsg });
       throw e;
     } finally {
-      this.syncStatus.set('idle');
+      if (!isRetry) {
+        this.syncStatus.set('idle');
+      }
     }
   }
 

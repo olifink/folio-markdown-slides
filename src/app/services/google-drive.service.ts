@@ -56,6 +56,8 @@ export class GoogleDriveService {
           prompt: prompt,
           callback: (response: google.accounts.oauth2.TokenResponse) => {
             if (response.error) {
+              // On error, also clear our local signal just in case
+              this.accessToken.set(null);
               reject(response);
             } else {
               this.accessToken.set(response.access_token);
@@ -89,7 +91,6 @@ export class GoogleDriveService {
    * Find or create the app-specific folder "Folio Markdown"
    */
   async getOrCreateFolder(): Promise<string> {
-    // Search for existing folder
     const query = encodeURIComponent("name = 'Folio Markdown' and mimeType = 'application/vnd.google-apps.folder' and trashed = false");
     const searchResponse = await this.request(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id)`);
     const searchResult = await searchResponse.json();
@@ -98,12 +99,9 @@ export class GoogleDriveService {
       return searchResult.files[0].id;
     }
 
-    // Create new folder
     const createResponse = await this.request('https://www.googleapis.com/drive/v3/files', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: 'Folio Markdown',
         mimeType: 'application/vnd.google-apps.folder'
@@ -142,12 +140,7 @@ export class GoogleDriveService {
       : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
     const method = fileId ? 'PATCH' : 'POST';
-
-    const response = await this.request(url, {
-      method,
-      body: form
-    });
-
+    const response = await this.request(url, { method, body: form });
     const result = await response.json();
     return result.id;
   }
