@@ -250,10 +250,18 @@ export class AppStore {
       }
 
       // 1. Load data
-      let manifest: Record<string, string> = {};
+      let manifest: Record<string, { id: string, lm: number, rm: number }> = {};
       try {
         if (await this.fs.exists('.sync-manifest.json')) {
-          manifest = JSON.parse(await this.fs.readFile('.sync-manifest.json'));
+          const raw = JSON.parse(await this.fs.readFile('.sync-manifest.json'));
+          // Migrate old format (string) to new format (object)
+          for (const key in raw) {
+            if (typeof raw[key] === 'string') {
+              manifest[key] = { id: raw[key], lm: 0, rm: 0 };
+            } else {
+              manifest[key] = raw[key];
+            }
+          }
         }
       } catch (e) {
         console.warn('Failed to load sync manifest', e);
@@ -261,17 +269,17 @@ export class AppStore {
 
       const remoteFiles = await this.drive.listFiles(folderId);
       const remoteMap = new Map(remoteFiles.map((f) => [f.name, f]));
-      const nextManifest: Record<string, string> = { ...manifest };
+      const nextManifest: Record<string, { id: string, lm: number, rm: number }> = { ...manifest };
 
       // 2. Deletion Sync (Full sync only)
       if (!targetFile) {
-        for (const [filename, driveId] of Object.entries(manifest)) {
+        for (const [filename, entry] of Object.entries(manifest)) {
           const isLocal = await this.fs.exists(filename);
           const isRemote = remoteMap.has(filename);
 
           if (!isLocal && isRemote) {
             console.log(`[Sync] Deleting remote file: ${filename}`);
-            await this.drive.deleteFile(driveId);
+            await this.drive.deleteFile(entry.id);
             remoteMap.delete(filename);
             delete nextManifest[filename];
           } else if (isLocal && !isRemote) {
@@ -287,40 +295,63 @@ export class AppStore {
       
       for (const filename of localFiles) {
         const localStats = await this.fs.getFileStats(filename);
-        if (!localStats) continue; // Should not happen for active file
+        if (!localStats) continue; 
 
         const remoteFile = remoteMap.get(filename);
+        const entry = manifest[filename];
         const localMtime = localStats.mtimeMs;
 
         if (remoteFile) {
           const remoteMtime = new Date(remoteFile.modifiedTime).getTime();
           const driveId = remoteFile.id;
 
-          if (localMtime > remoteMtime + 2000) {
+          // 3-way sync check
+          const localChanged = !entry || localMtime > (entry.lm + 2000);
+          const remoteChanged = !entry || remoteMtime > (entry.rm + 2000);
+
+          if (localChanged && remoteChanged && entry) {
+            // Conflict! For Quiet Tech, remote wins to preserve stability
+            console.log(`[Sync] Conflict detected for ${filename}, remote wins`);
+            const content = await this.drive.downloadFile(driveId);
+            await this.fs.writeFile(filename, content);
+            const newStats = await this.fs.getFileStats(filename);
+            nextManifest[filename] = { id: driveId, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
+            
+            if (filename === this.currentFile()) {
+              this.currentMarkdown.set(content);
+              this.isDirty.set(false);
+            }
+          } else if (localChanged) {
             console.log(`[Sync] Uploading newer local: ${filename}`);
             const content = await this.fs.readFile(filename);
             const newId = await this.drive.uploadFile(filename, content, folderId, driveId);
-            nextManifest[filename] = newId;
-          } else if (remoteMtime > localMtime + 2000) {
+            // After upload, we need the new remote timestamp
+            // For simplicity, we'll use "now" as the rm, or we can just let the next sync fix it.
+            // Google doesn't return modifiedTime in the simple upload response.
+            // We'll set lm to current to prevent re-upload.
+            nextManifest[filename] = { id: newId, lm: localMtime, rm: Date.now() + 5000 };
+          } else if (remoteChanged) {
             console.log(`[Sync] Downloading newer remote: ${filename}`);
             const content = await this.drive.downloadFile(driveId);
             await this.fs.writeFile(filename, content);
-            nextManifest[filename] = driveId;
+            const newStats = await this.fs.getFileStats(filename);
+            nextManifest[filename] = { id: driveId, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
 
-            // If the current file was updated, refresh the view
             if (filename === this.currentFile()) {
               this.currentMarkdown.set(content);
               this.isDirty.set(false);
             }
           } else {
-            nextManifest[filename] = driveId;
+            // No changes, but ensure manifest has timestamps if it was a legacy entry
+            nextManifest[filename] = { id: driveId, lm: entry?.lm || localMtime, rm: entry?.rm || remoteMtime };
           }
           remoteMap.delete(filename);
-        } else {
+        } else if (!entry) {
+          // New local file
           console.log(`[Sync] Uploading new file: ${filename}`);
           const content = await this.fs.readFile(filename);
           const driveId = await this.drive.uploadFile(filename, content, folderId);
-          nextManifest[filename] = driveId;
+          nextManifest[filename] = { id: driveId, lm: localMtime, rm: Date.now() + 5000 };
         }
       }
 
@@ -330,7 +361,9 @@ export class AppStore {
           console.log(`[Sync] Downloading new remote: ${filename}`);
           const content = await this.drive.downloadFile(remoteFile.id);
           await this.fs.writeFile(filename, content);
-          nextManifest[filename] = remoteFile.id;
+          const newStats = await this.fs.getFileStats(filename);
+          const remoteMtime = new Date(remoteFile.modifiedTime).getTime();
+          nextManifest[filename] = { id: remoteFile.id, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
 
           if (filename === this.currentFile()) {
             this.currentMarkdown.set(content);
