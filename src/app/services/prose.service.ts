@@ -202,9 +202,13 @@ ${standalone ? '' : `
     if (isPaged && !isPrint && !standalone) {
       pagedScript = `
 <script>
-    window.PagedConfig = {
-  auto: false,
-  after: function(flow) {
+    window.PagedConfig = { auto: false };
+</script>
+${hasMermaid ? mermaidTag : ''}
+<script src="js/paged.polyfill.min.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+  window.PagedPolyfill.preview().then(function(flow) {
     if (window.rescalePagedView) window.rescalePagedView();
     if (window.mermaid && ${hasMermaid}) {
       mermaid.initialize(${mermaidConfig(false)});
@@ -217,14 +221,7 @@ ${standalone ? '' : `
       window.parent.postMessage({ folioIdentifier: 'folio-preview', pageCount: total }, '*');
       window.parent.postMessage({ folioIdentifier: 'folio-preview', type: 'ready' }, '*');
     });
-  }
-};
-</script>
-${hasMermaid ? mermaidTag : ''}
-<script src="js/paged.polyfill.min.js"></script>
-<script>
-window.addEventListener('DOMContentLoaded', function() {
-  window.PagedPolyfill.preview();
+  });
 });
 </script>
 ${linkHandlerScript}
