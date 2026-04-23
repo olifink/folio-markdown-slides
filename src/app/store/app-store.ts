@@ -153,11 +153,11 @@ export class AppStore {
     try {
       const result = await this.drive.login();
       const folderId = await this.drive.getOrCreateFolder();
-      this.updatePrefs({ 
-        googleDriveFolderId: folderId, 
+      this.updatePrefs({
+        googleDriveFolderId: folderId,
         googleDriveSyncEnabled: true,
         googleDriveToken: result.token,
-        googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+        googleDriveTokenExpiresAt: Date.now() + result.expires_in * 1000,
       });
     } catch (e) {
       console.error('Failed to connect to Google Drive', e);
@@ -189,38 +189,39 @@ export class AppStore {
     this.syncStatus.set('syncing');
 
     const expiresAt = this.prefs().googleDriveTokenExpiresAt;
-    const isExpired = expiresAt && Date.now() > (expiresAt - 60000);
+    const isExpired = expiresAt && Date.now() > expiresAt - 60000;
     const lastError = this.prefs().lastSyncError || '';
-    const needsInteraction = lastError.includes('interaction_required') || lastError.includes('immediate_failed');
+    const needsInteraction =
+      lastError.includes('interaction_required') || lastError.includes('immediate_failed');
 
     try {
       // For manual sync, if we're not connected or expired, go straight to re-auth.
-      // We skip the silent refresh attempt here because on mobile it often causes the 
+      // We skip the silent refresh attempt here because on mobile it often causes the
       // subsequent interactive popup to be blocked by the browser's popup blocker
       // (as the user gesture context is lost during the silent await).
       if (!this.drive.isConnected || isExpired || needsInteraction) {
         console.log('[Sync] Token missing, expired, or interaction required. Triggering popup...');
-        
+
         const result = await this.drive.login(''); // Trigger interactive popup immediately
-        
+
         this.updatePrefs({
           googleDriveToken: result.token,
-          googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000),
-          lastSyncError: null
+          googleDriveTokenExpiresAt: Date.now() + result.expires_in * 1000,
+          lastSyncError: null,
         });
       }
-      
+
       await this.performSync();
     } catch (e: any) {
       console.error('Manual sync failed', e);
       this.syncStatus.set('error');
-      
+
       const msg = e.error_description || e.error || e.message || 'Unknown error';
       this.drive.logout();
-      this.updatePrefs({ 
+      this.updatePrefs({
         googleDriveToken: null,
         googleDriveTokenExpiresAt: null,
-        lastSyncError: `Sync failed: ${msg}. Click 'Sync Now' to reconnect.` 
+        lastSyncError: `Sync failed: ${msg}. Click 'Sync Now' to reconnect.`,
       });
     } finally {
       if (this.syncStatus() === 'syncing') {
@@ -238,7 +239,7 @@ export class AppStore {
   }
 
   /**
-   * Extracted core sync logic. 
+   * Extracted core sync logic.
    * If targetFile is provided, only that specific file is synced (Quick Sync).
    * Otherwise, a full sync including deletions is performed.
    */
@@ -250,7 +251,7 @@ export class AppStore {
       }
 
       // 1. Load data
-      let manifest: Record<string, { id: string, lm: number, rm: number }> = {};
+      let manifest: Record<string, { id: string; lm: number; rm: number }> = {};
       try {
         if (await this.fs.exists('.sync-manifest.json')) {
           const raw = JSON.parse(await this.fs.readFile('.sync-manifest.json'));
@@ -269,7 +270,7 @@ export class AppStore {
 
       const remoteFiles = await this.drive.listFiles(folderId);
       const remoteMap = new Map(remoteFiles.map((f) => [f.name, f]));
-      const nextManifest: Record<string, { id: string, lm: number, rm: number }> = { ...manifest };
+      const nextManifest: Record<string, { id: string; lm: number; rm: number }> = { ...manifest };
 
       // 2. Deletion Sync (Full sync only)
       if (!targetFile) {
@@ -292,10 +293,10 @@ export class AppStore {
 
       // 3. Update / Create Sync
       const localFiles = targetFile ? [targetFile] : await this.fs.listFiles();
-      
+
       for (const filename of localFiles) {
         const localStats = await this.fs.getFileStats(filename);
-        if (!localStats) continue; 
+        if (!localStats) continue;
 
         const remoteFile = remoteMap.get(filename);
         const entry = manifest[filename];
@@ -306,8 +307,8 @@ export class AppStore {
           const driveId = remoteFile.id;
 
           // 3-way sync check
-          const localChanged = !entry || localMtime > (entry.lm + 2000);
-          const remoteChanged = !entry || remoteMtime > (entry.rm + 2000);
+          const localChanged = !entry || localMtime > entry.lm + 2000;
+          const remoteChanged = !entry || remoteMtime > entry.rm + 2000;
 
           if (localChanged && remoteChanged && entry) {
             // Conflict! For Quiet Tech, remote wins to preserve stability
@@ -315,8 +316,12 @@ export class AppStore {
             const content = await this.drive.downloadFile(driveId);
             await this.fs.writeFile(filename, content);
             const newStats = await this.fs.getFileStats(filename);
-            nextManifest[filename] = { id: driveId, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
-            
+            nextManifest[filename] = {
+              id: driveId,
+              lm: newStats?.mtimeMs || Date.now(),
+              rm: remoteMtime,
+            };
+
             if (filename === this.currentFile()) {
               this.currentMarkdown.set(content);
               this.isDirty.set(false);
@@ -335,7 +340,11 @@ export class AppStore {
             const content = await this.drive.downloadFile(driveId);
             await this.fs.writeFile(filename, content);
             const newStats = await this.fs.getFileStats(filename);
-            nextManifest[filename] = { id: driveId, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
+            nextManifest[filename] = {
+              id: driveId,
+              lm: newStats?.mtimeMs || Date.now(),
+              rm: remoteMtime,
+            };
 
             if (filename === this.currentFile()) {
               this.currentMarkdown.set(content);
@@ -343,7 +352,11 @@ export class AppStore {
             }
           } else {
             // No changes, but ensure manifest has timestamps if it was a legacy entry
-            nextManifest[filename] = { id: driveId, lm: entry?.lm || localMtime, rm: entry?.rm || remoteMtime };
+            nextManifest[filename] = {
+              id: driveId,
+              lm: entry?.lm || localMtime,
+              rm: entry?.rm || remoteMtime,
+            };
           }
           remoteMap.delete(filename);
         } else if (!entry) {
@@ -363,7 +376,11 @@ export class AppStore {
           await this.fs.writeFile(filename, content);
           const newStats = await this.fs.getFileStats(filename);
           const remoteMtime = new Date(remoteFile.modifiedTime).getTime();
-          nextManifest[filename] = { id: remoteFile.id, lm: newStats?.mtimeMs || Date.now(), rm: remoteMtime };
+          nextManifest[filename] = {
+            id: remoteFile.id,
+            lm: newStats?.mtimeMs || Date.now(),
+            rm: remoteMtime,
+          };
 
           if (filename === this.currentFile()) {
             this.currentMarkdown.set(content);
@@ -379,7 +396,7 @@ export class AppStore {
         this.updatePrefs({ lastSyncTime: Date.now() });
       }
       await this.refreshList();
-      
+
       if (this.currentFile() && !nextManifest[this.currentFile()!]) {
         const list = this.fileList();
         if (list.length > 0) {
@@ -393,7 +410,7 @@ export class AppStore {
           const result = await this.drive.login('none');
           this.updatePrefs({
             googleDriveToken: result.token,
-            googleDriveTokenExpiresAt: Date.now() + (result.expires_in * 1000)
+            googleDriveTokenExpiresAt: Date.now() + result.expires_in * 1000,
           });
           return await this.performSync(targetFile, true);
         } catch (authError: any) {
@@ -410,7 +427,11 @@ export class AppStore {
     }
   }
 
-  async createFile(filename: string, content: string = SAMPLE_PROSE, isSlides: boolean = false): Promise<string> {
+  async createFile(
+    filename: string,
+    content: string = SAMPLE_PROSE,
+    isSlides: boolean = false,
+  ): Promise<string> {
     let finalName = filename;
     const suffix = isSlides ? '.slides.md' : '.md';
 
@@ -501,7 +522,8 @@ export class AppStore {
 
   cycleColorScheme(): void {
     const current = this.colorScheme();
-    const next = COLOR_SCHEME_CYCLE[(COLOR_SCHEME_CYCLE.indexOf(current) + 1) % COLOR_SCHEME_CYCLE.length];
+    const next =
+      COLOR_SCHEME_CYCLE[(COLOR_SCHEME_CYCLE.indexOf(current) + 1) % COLOR_SCHEME_CYCLE.length];
     this.updatePrefs({ darkMode: next });
   }
 
@@ -536,7 +558,7 @@ export class AppStore {
   }
 
   togglePreview(): void {
-    this.previewVisible.update(v => !v);
+    this.previewVisible.update((v) => !v);
   }
 
   dismissSafariWarning(): void {

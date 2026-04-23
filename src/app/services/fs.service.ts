@@ -21,7 +21,7 @@ export class FsService {
 
   async listFiles(): Promise<string[]> {
     const files = await this.promises.readdir('/documents');
-    return files.filter(f => f.endsWith('.md'));
+    return files.filter((f) => f.endsWith('.md'));
   }
 
   async readFile(filename: string): Promise<string> {
@@ -31,7 +31,7 @@ export class FsService {
 
   async writeFile(filename: string, content: string): Promise<void> {
     const fullPath = `/documents/${filename}`;
-    
+
     // Optimization: Skip write if content is identical to avoid mtime update
     try {
       if (await this.exists(filename)) {
@@ -44,9 +44,9 @@ export class FsService {
       // If reading fails, proceed to write anyway
     }
 
-    await this.promises.writeFile(fullPath, content, { 
+    await this.promises.writeFile(fullPath, content, {
       encoding: 'utf8',
-      mode: 0o666 
+      mode: 0o666,
     });
   }
 

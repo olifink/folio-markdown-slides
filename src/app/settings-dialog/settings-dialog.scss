@@ -1,23 +1,28 @@
-.dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--outline);
-
-  h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 500;
-  }
+.close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 100;
+  color: var(--on-surface-variant);
 }
 
 .settings-content {
-  padding: 1.5rem !important;
+  padding: 0 !important; // Tabs handle their own internal padding
+  display: flex;
+  flex-direction: column;
+  min-width: 440px;
+  min-height: 400px;
+}
+
+::ng-deep .mat-mdc-tab-header {
+  padding-right: 56px; // Space for the floating close button
+}
+
+.tab-content {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  min-width: 320px;
 }
 
 .settings-section {
@@ -114,11 +119,16 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(360deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
-.setting-info, .setting-error {
+.setting-info,
+.setting-error {
   display: flex;
   align-items: center;
   gap: 0.75rem;

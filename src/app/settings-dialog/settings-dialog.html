@@ -1,116 +1,153 @@
-<div class="dialog-header">
-  <h2 mat-dialog-title>Settings</h2>
-  <button mat-icon-button (click)="close()" aria-label="Close dialog">
-    <mat-icon>close</mat-icon>
-  </button>
-</div>
+<button mat-icon-button class="close-button" (click)="close()" aria-label="Close dialog">
+  <mat-icon>close</mat-icon>
+</button>
 
 <mat-dialog-content class="settings-content">
-  <section class="settings-section">
-    <h3 class="settings-section__title">Appearance</h3>
+  <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
+    <mat-tab label="Appearance">
+      <div class="tab-content">
+        <section class="settings-section">
+          <h3 class="settings-section__title">Themes & Visuals</h3>
 
-    <div class="setting-item">
-      <div class="setting-item__label">
-        <mat-icon>palette</mat-icon>
-        <span>Theme</span>
+          <div class="setting-item">
+            <div class="setting-item__label">
+              <mat-icon>palette</mat-icon>
+              <span>Theme</span>
+            </div>
+            <mat-button-toggle-group
+              [value]="currentAppTheme()"
+              (change)="store.setAppTheme($event.value)"
+              aria-label="App theme"
+            >
+              <mat-button-toggle value="quiet">Quiet</mat-button-toggle>
+              <mat-button-toggle value="clean">Clean</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-item__label">
+              <mat-icon>font_download</mat-icon>
+              <span>Font Family</span>
+            </div>
+            <mat-button-toggle-group
+              [value]="currentFontFamily()"
+              (change)="store.setFontFamily($event.value)"
+              aria-label="Font family"
+            >
+              <mat-button-toggle value="sans-serif">Sans Serif</mat-button-toggle>
+              <mat-button-toggle value="serif">Serif</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-item__label">
+              <mat-icon>{{
+                currentColorScheme() === 'dark'
+                  ? 'dark_mode'
+                  : currentColorScheme() === 'light'
+                    ? 'light_mode'
+                    : 'brightness_auto'
+              }}</mat-icon>
+              <span>Mode</span>
+            </div>
+            <mat-button-toggle-group
+              [value]="currentColorScheme()"
+              (change)="store.setDarkMode($event.value)"
+              class="icon-group"
+              aria-label="Color scheme"
+            >
+              <mat-button-toggle value="system" matTooltip="System">
+                <mat-icon>brightness_auto</mat-icon>
+              </mat-button-toggle>
+              <mat-button-toggle value="light" matTooltip="Light">
+                <mat-icon>light_mode</mat-icon>
+              </mat-button-toggle>
+              <mat-button-toggle value="dark" matTooltip="Dark">
+                <mat-icon>dark_mode</mat-icon>
+              </mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+        </section>
       </div>
-      <mat-button-toggle-group [value]="currentAppTheme()" (change)="store.setAppTheme($event.value)"
-        aria-label="App theme">
-        <mat-button-toggle value="quiet">Quiet</mat-button-toggle>
-        <mat-button-toggle value="clean">Clean</mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
+    </mat-tab>
 
-    <div class="setting-item">
-      <div class="setting-item__label">
-        <mat-icon>font_download</mat-icon>
-        <span>Font Family</span>
+    <mat-tab label="Editor">
+      <div class="tab-content">
+        <section class="settings-section">
+          <h3 class="settings-section__title">Editor Preferences</h3>
+
+          <div class="setting-item vertical">
+            <div class="setting-item__label">
+              <mat-icon>format_size</mat-icon>
+              <span>Font Size ({{ currentEditorFontSize() }}px)</span>
+            </div>
+            <mat-slider min="12" max="32" step="1" discrete showTickMarks>
+              <input
+                matSliderThumb
+                [value]="currentEditorFontSize()"
+                (valueChange)="store.setEditorFontSize($event)"
+              />
+            </mat-slider>
+          </div>
+        </section>
       </div>
-      <mat-button-toggle-group [value]="currentFontFamily()" (change)="store.setFontFamily($event.value)"
-        aria-label="Font family">
-        <mat-button-toggle value="sans-serif">Sans Serif</mat-button-toggle>
-        <mat-button-toggle value="serif">Serif</mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
+    </mat-tab>
 
-    <div class="setting-item">
-      <div class="setting-item__label">
-        <mat-icon>{{ currentColorScheme() === 'dark' ? 'dark_mode' : currentColorScheme() === 'light' ? 'light_mode' :
-          'brightness_auto' }}</mat-icon>
-        <span>Mode</span>
+    <mat-tab label="Advanced">
+      <div class="tab-content">
+        <section class="settings-section">
+          <h3 class="settings-section__title">Cloud Sync</h3>
+
+          <div class="setting-item">
+            <div class="setting-item__label">
+              <mat-icon>cloud_queue</mat-icon>
+              <span>Google Drive</span>
+            </div>
+            @if (!store.driveEnabled()) {
+              <button mat-stroked-button (click)="store.connectDrive()">
+                <mat-icon>login</mat-icon>
+                Connect
+              </button>
+            } @else {
+              <div class="sync-actions">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="store.syncStatus() === 'syncing'"
+                  (click)="store.syncNow()"
+                >
+                  <mat-icon [class.spinning]="store.syncStatus() === 'syncing'">sync</mat-icon>
+                  <span>{{ store.syncStatus() === 'syncing' ? 'Syncing...' : 'Sync Now' }}</span>
+                </button>
+                <button
+                  mat-icon-button
+                  (click)="store.disconnectDrive()"
+                  matTooltip="Disconnect Google Drive"
+                  [disabled]="store.syncStatus() === 'syncing'"
+                >
+                  <mat-icon>logout</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+
+          @if (store.prefs().lastSyncTime) {
+            <div class="setting-info">
+              <mat-icon>history</mat-icon>
+              <span>Last sync: {{ store.prefs().lastSyncTime | date: 'medium' }}</span>
+            </div>
+          }
+
+          @if (store.syncStatus() === 'error' || store.prefs().lastSyncError) {
+            <div class="setting-error">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{
+                store.prefs().lastSyncError || 'Sync failed. Please try connecting again.'
+              }}</span>
+            </div>
+          }
+        </section>
       </div>
-      <mat-button-toggle-group [value]="currentColorScheme()" (change)="store.setDarkMode($event.value)"
-        class="icon-group" aria-label="Color scheme">
-        <mat-button-toggle value="system" matTooltip="System">
-          <mat-icon>brightness_auto</mat-icon>
-        </mat-button-toggle>
-        <mat-button-toggle value="light" matTooltip="Light">
-          <mat-icon>light_mode</mat-icon>
-        </mat-button-toggle>
-        <mat-button-toggle value="dark" matTooltip="Dark">
-          <mat-icon>dark_mode</mat-icon>
-        </mat-button-toggle>
-      </mat-button-toggle-group>
-    </div>
-  </section>
-
-  <section class="settings-section">
-    <h3 class="settings-section__title">Editor</h3>
-
-    <div class="setting-item vertical">
-      <div class="setting-item__label">
-        <mat-icon>format_size</mat-icon>
-        <span>Font Size ({{ currentEditorFontSize() }}px)</span>
-      </div>
-      <mat-slider min="12" max="32" step="1" discrete showTickMarks>
-        <input matSliderThumb [value]="currentEditorFontSize()" (valueChange)="store.setEditorFontSize($event)">
-      </mat-slider>
-    </div>
-  </section>
-
-  <section class="settings-section">
-    <h3 class="settings-section__title">Cloud Sync</h3>
-
-    <div class="setting-item">
-      <div class="setting-item__label">
-        <mat-icon>cloud_queue</mat-icon>
-        <span>Google Drive</span>
-      </div>
-      @if (!store.driveEnabled()) {
-      <button mat-stroked-button (click)="store.connectDrive()">
-        <mat-icon>login</mat-icon>
-        Connect
-      </button>
-      } @else {
-      <div class="sync-actions">
-        <button mat-flat-button color="primary" [disabled]="store.syncStatus() === 'syncing'" (click)="store.syncNow()">
-          <mat-icon [class.spinning]="store.syncStatus() === 'syncing'">sync</mat-icon>
-          <span>{{ store.syncStatus() === 'syncing' ? 'Syncing...' : 'Sync Now' }}</span>
-        </button>
-        <button mat-icon-button (click)="store.disconnectDrive()" matTooltip="Disconnect Google Drive"
-          [disabled]="store.syncStatus() === 'syncing'">
-          <mat-icon>logout</mat-icon>
-        </button>
-      </div>
-      }
-    </div>
-
-    @if (store.prefs().lastSyncTime) {
-    <div class="setting-info">
-      <mat-icon>history</mat-icon>
-      <span>Last sync: {{ store.prefs().lastSyncTime | date:'medium' }}</span>
-    </div>
-    }
-
-    @if (store.syncStatus() === 'error' || store.prefs().lastSyncError) {
-    <div class="setting-error">
-      <mat-icon>error_outline</mat-icon>
-      <span>{{ store.prefs().lastSyncError || 'Sync failed. Please try connecting again.' }}</span>
-    </div>
-    }
-  </section>
+    </mat-tab>
+  </mat-tab-group>
 </mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-button (click)="close()">Close</button>
-</mat-dialog-actions>
