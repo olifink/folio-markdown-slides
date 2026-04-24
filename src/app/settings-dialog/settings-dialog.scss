@@ -172,3 +172,27 @@
   display: flex;
   gap: 0.5rem;
 }
+
+.full-width {
+  width: 100%;
+}
+
+mat-form-field {
+  margin-top: 8px;
+}
+
+mat-hint {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+  opacity: 0.8;
+
+  a {
+    color: var(--color-plasma);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

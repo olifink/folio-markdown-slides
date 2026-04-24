@@ -147,6 +147,31 @@
             </div>
           }
         </section>
+
+        <section class="settings-section">
+          <h3 class="settings-section__title">AI Integration (Gemini)</h3>
+
+          <div class="setting-item vertical">
+            <div class="setting-item__label">
+              <mat-icon>auto_awesome</mat-icon>
+              <span>Gemini API Key</span>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Enter API Key</mat-label>
+              <input
+                matInput
+                type="password"
+                [ngModel]="store.prefs().geminiApiKey"
+                (ngModelChange)="store.setGeminiApiKey($event)"
+                placeholder="AIza..."
+              />
+              <mat-hint
+                >Uses model <code>gemini-flash-lite-latest</code>. Get a key at
+                <a href="https://aistudio.google.com/app/apikey" target="_blank">AI Studio</a>
+              </mat-hint>
+            </mat-form-field>
+          </div>
+        </section>
       </div>
     </mat-tab>
   </mat-tab-group>

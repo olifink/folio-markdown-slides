@@ -13,17 +13,34 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EditorView } from '@codemirror/view';
 import { EditorState, Transaction } from '@codemirror/state';
 import { fromEvent } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppStore } from '../store/app-store';
 import { EditorService } from '../services/editor.service';
 import { createFolioExtensions } from './folio-editor';
 import { CheatBarComponent, CheatItem } from './cheat-bar/cheat-bar';
+import { AiPromptDialogComponent } from '../ai-prompt-dialog/ai-prompt-dialog';
 
 @Component({
   selector: 'app-editor-pane',
-  imports: [CheatBarComponent],
+  imports: [
+    CheatBarComponent,
+    MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
+    MatTooltipModule,
+  ],
   template: `
     <div #editorHost class="editor-host"></div>
     <app-cheat-bar (insert)="onCheatInsert($event)" />
+    
+    @if (store.prefs().geminiApiKey) {
+      <button mat-fab class="ai-fab" (click)="openAiPrompt()" matTooltip="Ask Gemini">
+        <mat-icon>auto_awesome</mat-icon>
+      </button>
+    }
   `,
   styleUrl: './editor-pane.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,9 +49,10 @@ import { CheatBarComponent, CheatItem } from './cheat-bar/cheat-bar';
 export class EditorPaneComponent {
   readonly active = input(true);
 
-  private readonly store = inject(AppStore);
+  protected readonly store = inject(AppStore);
   private readonly editorService = inject(EditorService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly dialog = inject(MatDialog);
   private readonly editorHost = viewChild.required<ElementRef<HTMLDivElement>>('editorHost');
 
   private editorView: EditorView | null = null;
@@ -45,7 +63,7 @@ export class EditorPaneComponent {
       idx => this.store.goToSlide(idx)
     ),
     // Add scroll margins to keep the cursor from hitting the very bottom (better mobile UX)
-    EditorView.scrollMargins.of(() => ({ bottom: 40 }))
+    EditorView.scrollMargins.of(() => ({ bottom: 100 }))
   ];
 
   constructor() {
@@ -114,6 +132,20 @@ export class EditorPaneComponent {
     });
 
     this.destroyRef.onDestroy(() => this.editorView?.destroy());
+  }
+
+  protected openAiPrompt(): void {
+    const dialogRef = this.dialog.open(AiPromptDialogComponent, {
+      width: '100%',
+      maxWidth: '600px',
+      autoFocus: 'textarea',
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (typeof result === 'string') {
+        this.store.setMarkdown(result);
+      }
+    });
   }
 
   protected onCheatInsert(item: CheatItem): void {

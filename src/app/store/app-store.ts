@@ -99,6 +99,7 @@ export class AppStore {
     googleDriveTokenExpiresAt: null,
     lastSyncTime: null,
     lastSyncError: null,
+    geminiApiKey: null,
   });
 
   readonly selectedTab = signal(0);
@@ -550,6 +551,10 @@ export class AppStore {
 
   setEditorFontSize(size: number): void {
     this.updatePrefs({ editorFontSize: size });
+  }
+
+  setGeminiApiKey(key: string | null): void {
+    this.updatePrefs({ geminiApiKey: key });
   }
 
   setSelectedTab(index: number): void {

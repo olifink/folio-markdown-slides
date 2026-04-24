@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>
+  <mat-icon>auto_awesome</mat-icon>
+  <span>Ask Gemini</span>
+</h2>
+
+<mat-dialog-content class="prompt-content">
+  <p class="description">
+    Describe how you want to modify your slides or document. 
+    Gemini will rewrite the content for you.
+  </p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>What should I do?</mat-label>
+    <textarea
+      matInput
+      rows="4"
+      [ngModel]="prompt()"
+      (ngModelChange)="prompt.set($event)"
+      placeholder="e.g. 'Make the tone more professional', 'Add a slide about features', 'Summarize this content into bullet points'"
+      [disabled]="isLoading()"
+      (keydown.enter)="handleKeyDown($event)"
+    ></textarea>
+    <mat-hint>Press Ctrl+Enter to submit</mat-hint>
+  </mat-form-field>
+
+  @if (error()) {
+    <div class="error-message">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <mat-progress-bar mode="indeterminate" class="progress-bar"></mat-progress-bar>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" [disabled]="isLoading()">Cancel</button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="submit()"
+    [disabled]="isLoading() || !prompt().trim()"
+  >
+    Generate
+  </button>
+</mat-dialog-actions>

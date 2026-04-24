@@ -4,6 +4,7 @@
   height: 100%;
   overflow: hidden;
   background: var(--surface);
+  position: relative;
 }
 
 .editor-host {
@@ -18,5 +19,20 @@
   ::ng-deep .cm-editor {
     height: 100%;
     outline: none !important;
+  }
+}
+
+.ai-fab {
+  position: absolute;
+  right: 1.5rem;
+  bottom: calc(1.5rem + 52px + env(safe-area-inset-bottom));
+  z-index: 10;
+  background-color: var(--color-plasma) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  @media (max-width: 600px) {
+    right: 1rem;
+    bottom: calc(1rem + 52px + env(safe-area-inset-bottom));
   }
 }

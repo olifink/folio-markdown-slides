@@ -15,6 +15,7 @@ export interface AppPrefs {
   googleDriveTokenExpiresAt: number | null;
   lastSyncTime: number | null;
   lastSyncError: string | null;
+  geminiApiKey: string | null;
 }
 
 const DEFAULT_PREFS: AppPrefs = {
@@ -32,6 +33,7 @@ const DEFAULT_PREFS: AppPrefs = {
   googleDriveTokenExpiresAt: null,
   lastSyncTime: null,
   lastSyncError: null,
+  geminiApiKey: null,
 };
 
 @Injectable({ providedIn: 'root' })

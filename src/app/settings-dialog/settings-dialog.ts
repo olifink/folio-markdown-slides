@@ -7,6 +7,9 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 import { AppStore } from '../store/app-store';
 
 @Component({
@@ -20,6 +23,9 @@ import { AppStore } from '../store/app-store';
     MatSliderModule,
     MatTooltipModule,
     MatTabsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
   ],
   templateUrl: './settings-dialog.html',
   styleUrl: './settings-dialog.scss',
