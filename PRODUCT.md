@@ -173,6 +173,7 @@ Folio helps you write, preview, and publish in one seamless Markdown workflow.
 - Local-first and offline-capable
 - Controlled Google Drive synchronization
 - Real-time Markdown preview
+- Gemini-powered AI editing assistant
 - Flow, page, and slide-friendly editing
 - Standard Markdown support
 - Mermaid diagrams, math, and task lists built in

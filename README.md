@@ -60,6 +60,7 @@ npm start                         # dev server → http://localhost:4200
 - **PWA** — fully functional offline via Angular Service Worker; pre-caches app shell, assets, and fonts.
 - **Export** — download as `.md`, self-contained `.html` (Mermaid diagrams inlined), or Print to PDF.
 - **Presentation mode** — full-screen slides with keyboard and touch swipe navigation.
+- **AI-Powered Editing** — optionally integrate with Google Gemini (using `gemini-flash-lite-latest`) to rewrite, summarize, or generate content directly in the editor.
 - **Slide sync** — preview scrolls to the slide matching the cursor position.
 - **MarpX themes** — 16 professional themes bundled (cantor, einstein, socrates, …).
 - **Dark mode** — system / light / dark toggle; prose preview and syntax highlighting both respond.
@@ -71,6 +72,15 @@ npm start                         # dev server → http://localhost:4200
 - **Privacy First** — uses the `drive.file` scope; Folio can only see and manage files it creates.
 - **Multi-device Sync** — uses a manifest and file timestamps to handle updates and deletions across multiple devices.
 - **Smart Conflict Resolution** — uses a "Last Write Wins" strategy with a 2-second timestamp buffer to handle precision differences between systems.
+
+### AI Integration (Gemini)
+
+Folio includes an optional AI-powered editing assistant powered by Google Gemini.
+
+- **Bring your own key** — Provide your own Gemini API key (via [Google AI Studio](https://aistudio.google.com/app/apikey)) to enable AI features.
+- **Smart Rewriting** — Use the "Auto Awesome" button in the editor to rewrite, summarize, or modify your content using the `gemini-flash-lite-latest` model.
+- **New Document via AI** — Use AI prompts to generate entirely new documents based on your current work.
+- **Privacy Conscious** — Your API key is stored locally on your device (IndexedDB) and is only sent to the Gemini API when you explicitly request an AI action.
 
 ### Prose mode features
 
@@ -108,6 +118,7 @@ Folio bundles the [MarpX](https://github.com/cunhapaulo/MarpX) theme collection.
 | PWA | `@angular/pwa` (Workbox service worker) | ✅ |
 | Themes | MarpX Collection (16 themes) | ✅ |
 | Cloud Sync | Google Drive API v3 + GIS | ✅ |
+| AI Editing | Google Gemini (`gemini-flash-lite-latest`) | ✅ |
 | Prose math | KaTeX — MathML output, no CSS dependency | ✅ |
 | Syntax highlighting | highlight.js — custom light/dark token theme | ✅ |
 
@@ -147,6 +158,7 @@ Shared markdown-it plugins (mark, footnote, deflist, task-lists, container, Merm
 | M6 | Export — `.md`, self-contained HTML, print-to-PDF | ✅ Done |
 | M7 | **Prose mode** — frontmatter detection, Paged.js pagination, `---` as page break | ✅ Done |
 | M8 | Polish — dark mode, smart snippets, lavender "post-it" theme | ✅ Done |
+| M9 | **AI Integration** — Gemini-powered rewriting, summarization, and document creation | ✅ Done |
 
 ---
 
