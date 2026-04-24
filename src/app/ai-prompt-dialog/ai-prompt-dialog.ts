@@ -55,7 +55,8 @@ export class AiPromptDialogComponent {
 
   protected handleKeyDown(event: Event): void {
     const kbEvent = event as KeyboardEvent;
-    if (kbEvent.ctrlKey || kbEvent.metaKey) {
+    if (kbEvent.key === 'Enter' && (kbEvent.ctrlKey || kbEvent.metaKey)) {
+      kbEvent.preventDefault();
       this.submit();
     }
   }

@@ -18,7 +18,7 @@
       (ngModelChange)="prompt.set($event)"
       placeholder="e.g. 'Make the tone more professional', 'Add a slide about features', 'Summarize this content into bullet points'"
       [disabled]="isLoading()"
-      (keydown.enter)="handleKeyDown($event)"
+      (keydown)="handleKeyDown($event)"
     ></textarea>
     <mat-hint>Press Ctrl+Enter to submit</mat-hint>
   </mat-form-field>
